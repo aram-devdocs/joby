@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
-import { HelloWorld } from '@packages/ui';
+import { OllamaChat } from '@packages/ui';
 
 export const App: React.FC = () => {
-  const [clickCount, setClickCount] = useState(0);
+  const handleSendPrompt = async (model: string, prompt: string): Promise<string> => {
+    try {
+      const response = await window.electronAPI.ollama.sendPrompt(model, prompt);
+      return response;
+    } catch (error) {
+      console.error('Failed to send prompt:', error);
+      throw error;
+    }
+  };
 
-  const handleButtonClick = () => {
-    setClickCount(prev => prev + 1);
-    console.log(`Button clicked ${clickCount + 1} times`);
+  const handleGetModels = async (): Promise<Array<{ name: string; modified_at: string }>> => {
+    try {
+      const models = await window.electronAPI.ollama.getModels();
+      return models;
+    } catch (error) {
+      console.error('Failed to get models:', error);
+      throw error;
+    }
+  };
+
+  const handleSetHost = async (host: string): Promise<void> => {
+    try {
+      await window.electronAPI.ollama.setHost(host);
+    } catch (error) {
+      console.error('Failed to set host:', error);
+      throw error;
+    }
   };
 
   return (
-    <div>
-      <HelloWorld 
-        name="Electron + TypeScript" 
-        onButtonClick={handleButtonClick}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+      <OllamaChat
+        onSendPrompt={handleSendPrompt}
+        onGetModels={handleGetModels}
+        onSetHost={handleSetHost}
+        initialHost="http://127.0.0.1:11434"
       />
-      {clickCount > 0 && (
-        <div className="text-center mt-4 text-gray-600">
-          Button clicked {clickCount} time{clickCount !== 1 ? 's' : ''}
-        </div>
-      )}
     </div>
   );
 };
