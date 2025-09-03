@@ -2,19 +2,36 @@
   "name": "desktop",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": ".webpack/main",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "electron-forge start",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "electron": "^38.0.0"
-  },
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.3",
+    "@electron-forge/maker-deb": "^7.8.3",
+    "@electron-forge/maker-squirrel": "^7.8.3",
+    "@electron-forge/maker-zip": "^7.8.3",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
+    "@electron-forge/plugin-webpack": "^7.8.3",
     "@types/electron": "^1.6.12",
-    "electron-builder": "^26.0.12",
-    "vite": "^7.1.4"
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "css-loader": "^7.1.2",
+    "electron": "^38.0.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@packages/ui": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
