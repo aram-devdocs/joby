@@ -4,3 +4,4 @@ const formattedCode = "Now properly formatted";
 
 // Using the variables to avoid unused warnings
 export { message, formattedCode };
+// Another test
