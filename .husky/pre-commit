@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+# Run lint-staged for incremental checks on staged files
+npx lint-staged
+
+# Run type checking for TypeScript files
+echo "Running type checks..."
+pnpm check-types

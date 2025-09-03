@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+# Run full build before pushing
+echo "Running build verification before push..."
+pnpm build
+
+# Run full test suite when tests are available
+# Uncomment when tests are added to the project
+# echo "Running tests..."
+# pnpm test
