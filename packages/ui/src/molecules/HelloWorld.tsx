@@ -1,14 +1,14 @@
-import React from 'react';
-import { Button } from './Button';
+import React from "react";
+import { Button } from "../atoms/button";
 
 export interface HelloWorldProps {
   name?: string;
   onButtonClick?: () => void;
 }
 
-export const HelloWorld: React.FC<HelloWorldProps> = ({ 
-  name = 'World',
-  onButtonClick 
+export const HelloWorld: React.FC<HelloWorldProps> = ({
+  name = "World",
+  onButtonClick,
 }) => {
   const handleClick = () => {
     if (onButtonClick) {
@@ -28,10 +28,11 @@ export const HelloWorld: React.FC<HelloWorldProps> = ({
           Welcome to your Electron + React + TypeScript app
         </p>
         <div className="flex gap-2">
-          <Button onClick={handleClick}>
-            Click Me
-          </Button>
-          <Button variant="secondary" onClick={() => console.log('Secondary clicked')}>
+          <Button onClick={handleClick}>Click Me</Button>
+          <Button
+            variant="secondary"
+            onClick={() => console.log("Secondary clicked")}
+          >
             Console Log
           </Button>
         </div>

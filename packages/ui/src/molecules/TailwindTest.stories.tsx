@@ -62,7 +62,7 @@ const TailwindTest = () => (
 );
 
 const meta = {
-  title: "Tests/TailwindCSS",
+  title: "Molecules/TailwindTest",
   component: TailwindTest,
   parameters: {
     layout: "fullscreen",

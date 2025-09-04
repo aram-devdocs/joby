@@ -1,5 +1,5 @@
 import React from "react";
-import { OllamaChat } from "../components/OllamaChat";
+import { OllamaChat } from "../molecules/OllamaChat";
 
 export interface OllamaPageProps {
   onSendPrompt: (model: string, prompt: string) => Promise<string>;

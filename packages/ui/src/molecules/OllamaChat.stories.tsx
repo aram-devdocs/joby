@@ -3,7 +3,7 @@ import { OllamaChat, OllamaChatProps } from "./OllamaChat";
 import { useState } from "react";
 
 const meta = {
-  title: "Components/OllamaChat",
+  title: "Molecules/OllamaChat",
   component: OllamaChat,
   parameters: {
     layout: "centered",

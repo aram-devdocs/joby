@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { HelloWorld, HelloWorldProps } from "./HelloWorld";
 
 const meta = {
-  title: "Components/HelloWorld",
+  title: "Molecules/HelloWorld",
   component: HelloWorld,
   parameters: {
     layout: "fullscreen",

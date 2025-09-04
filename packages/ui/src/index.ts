@@ -1,43 +1,30 @@
-// Core components (atomic design - atoms)
-export * from "./core";
+// Atoms - Basic building blocks
+export * from "./atoms";
 
-// Layout components
-export { SplitPanel } from "./components/layout/SplitPanel";
-export { Sidebar } from "./components/layout/Sidebar";
-export type { SidebarItem } from "./components/layout/Sidebar";
+// Molecules - Compound components
+export { HelloWorld } from "./molecules/HelloWorld";
+export type { HelloWorldProps } from "./molecules/HelloWorld";
+export { OllamaChat } from "./molecules/OllamaChat";
+export type { OllamaChatProps } from "./molecules/OllamaChat";
 
-// Features
-export * from "./features/browser";
+// Organisms - Complex components
+export { SplitPanel } from "./organisms/layout/SplitPanel";
+export { Sidebar } from "./organisms/layout/Sidebar";
+export type { SidebarItem } from "./organisms/layout/Sidebar";
 
-// Pages
+// Templates - Page layouts
+export { DashboardTemplate } from "./templates/DashboardTemplate";
+
+// Pages - Complete page components
 export { BrowserPage } from "./pages/BrowserPage";
 export { OllamaPage } from "./pages/OllamaPage";
 export type { OllamaPageProps } from "./pages/OllamaPage";
 
-// Templates
-export { DashboardTemplate } from "./templates/DashboardTemplate";
+// Features - Feature-specific components
+export * from "./features/browser";
 
-// Legacy components (to be refactored)
-export { Button as LegacyButton } from "./components/Button";
-export type { ButtonProps as LegacyButtonProps } from "./components/Button";
-
-export { HelloWorld } from "./components/HelloWorld";
-export type { HelloWorldProps } from "./components/HelloWorld";
-
-export { Input as LegacyInput } from "./components/Input";
-export type { InputProps as LegacyInputProps } from "./components/Input";
-
-export { Select } from "./components/Select";
-export type { SelectProps, SelectOption } from "./components/Select";
-
-export { TextArea } from "./components/TextArea";
-export type { TextAreaProps } from "./components/TextArea";
-
-export { Card as LegacyCard } from "./components/Card";
-export type { CardProps as LegacyCardProps } from "./components/Card";
-
-export { OllamaChat } from "./components/OllamaChat";
-export type { OllamaChatProps } from "./components/OllamaChat";
+// Theme and Design System
+export * from "./theme/tokens";
 
 // Utils
 export { cn } from "./lib/utils";

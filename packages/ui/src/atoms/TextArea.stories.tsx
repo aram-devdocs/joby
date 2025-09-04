@@ -3,7 +3,7 @@ import { TextArea } from "./TextArea";
 import { useState } from "react";
 
 const meta = {
-  title: "Components/TextArea",
+  title: "Atoms/TextArea",
   component: TextArea,
   parameters: {
     layout: "centered",

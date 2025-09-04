@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export interface TextAreaProps {
   value: string;
@@ -16,15 +16,13 @@ export const TextArea: React.FC<TextAreaProps> = ({
   placeholder,
   disabled = false,
   rows = 4,
-  className = '',
+  className = "",
   label,
 }) => {
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
       )}
       <textarea
         value={value}

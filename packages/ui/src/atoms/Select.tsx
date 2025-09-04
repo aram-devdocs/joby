@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export interface SelectOption {
   value: string;
@@ -19,17 +19,15 @@ export const Select: React.FC<SelectProps> = ({
   value,
   onChange,
   options,
-  placeholder = 'Select an option',
+  placeholder = "Select an option",
   disabled = false,
-  className = '',
+  className = "",
   label,
 }) => {
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
       )}
       <select
         value={value}

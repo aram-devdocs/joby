@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const meta = {
-  title: "Core/Input",
+  title: "Atoms/Input",
   component: Input,
   parameters: {
     layout: "centered",
