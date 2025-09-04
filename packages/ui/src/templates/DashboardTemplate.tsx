@@ -1,6 +1,6 @@
-import React from "react";
-import { Sidebar, SidebarItem } from "../organisms/layout/Sidebar";
-import { cn } from "../lib/utils";
+import React from 'react';
+import { Sidebar, SidebarItem } from '../organisms/layout/Sidebar';
+import { cn } from '../lib/utils';
 
 interface DashboardTemplateProps {
   children: React.ReactNode;
@@ -20,8 +20,11 @@ export function DashboardTemplate({
   };
 
   return (
-    <div className={cn("flex h-screen bg-gray-50", className)}>
-      <Sidebar activeItem={activeRoute} onItemClick={handleSidebarItemClick} />
+    <div className={cn('flex h-screen bg-gray-50', className)}>
+      <Sidebar
+        {...(activeRoute && { activeItem: activeRoute })}
+        onItemClick={handleSidebarItemClick}
+      />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   );

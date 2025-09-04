@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 export interface FormField {
   name?: string;
@@ -48,7 +48,7 @@ export function BrowserProvider({
     detectedForms,
     setDetectedForms,
     clearForms,
-    browserAPI,
+    ...(browserAPI && { browserAPI }),
     setBrowserAPI,
   };
 
@@ -60,7 +60,7 @@ export function BrowserProvider({
 export function useBrowserContext() {
   const context = useContext(BrowserContext);
   if (!context) {
-    throw new Error("useBrowserContext must be used within a BrowserProvider");
+    throw new Error('useBrowserContext must be used within a BrowserProvider');
   }
   return context;
 }
