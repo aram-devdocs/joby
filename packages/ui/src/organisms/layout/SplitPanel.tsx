@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 
 interface SplitPanelProps {
   left: React.ReactNode;
@@ -41,17 +41,17 @@ export const SplitPanel: React.FC<SplitPanelProps> = ({
     };
 
     if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
     }
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
   }, [isDragging, minSize]);
 
@@ -62,7 +62,7 @@ export const SplitPanel: React.FC<SplitPanelProps> = ({
       </div>
       <div
         className={`w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors relative ${
-          isDragging ? "bg-blue-500" : ""
+          isDragging ? 'bg-blue-500' : ''
         }`}
         onMouseDown={handleMouseDown}
       >

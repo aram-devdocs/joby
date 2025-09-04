@@ -1,10 +1,27 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Badge, Card, CardHeader, CardTitle } from "../../atoms";
-import { Globe, CheckCircle, Loader2 } from "lucide-react";
-import { useBrowserContext } from "../../contexts/browser/BrowserContext";
+import React, { useEffect, useRef, useState } from 'react';
+import { Badge, Card, CardHeader, CardTitle } from '../../atoms';
+import { Globe, CheckCircle, Loader2 } from 'lucide-react';
+import { useBrowserContext } from '../../contexts/browser/BrowserContext';
+import type {
+  WebviewElement,
+  NavigationEvent,
+  PageTitleEvent,
+} from '../../types/electron-webview';
+
+interface FormField {
+  name: string;
+  type: string;
+  id: string;
+  placeholder: string;
+  required: boolean;
+}
+
+interface Form {
+  fields: FormField[];
+}
 
 interface BrowserViewProps {
-  onFormDetected?: (forms: any) => void;
+  onFormDetected?: (forms: Form[]) => void;
   onNavigationChange?: () => void;
 }
 
@@ -13,11 +30,11 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   onNavigationChange,
 }) => {
   const { browserAPI } = useBrowserContext();
-  const webviewRef = useRef<any>(null);
+  const webviewRef = useRef<WebviewElement | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
-  const [currentUrl, setCurrentUrl] = useState("https://www.google.com");
-  const [inputUrl, setInputUrl] = useState("https://www.google.com");
-  const [pageTitle, setPageTitle] = useState("");
+  const [currentUrl, setCurrentUrl] = useState('https://www.google.com');
+  const [inputUrl, setInputUrl] = useState('https://www.google.com');
+  const [pageTitle, setPageTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [jobSite, setJobSite] = useState<string | null>(null);
 
@@ -35,7 +52,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
 
       // Inject form detection script
       webview
-        .executeJavaScript(
+        .executeJavaScript<Form[]>(
           `
         (function() {
           const forms = [];
@@ -60,7 +77,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
         })()
       `,
         )
-        .then((forms: any) => {
+        .then((forms) => {
           if (forms.length > 0 && onFormDetected) {
             onFormDetected(forms);
           }
@@ -75,7 +92,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       setIsLoading(false);
     };
 
-    const handleDidNavigate = (event: any) => {
+    const handleDidNavigate = (event: NavigationEvent) => {
       const url = event.url || webview.getURL();
       setCurrentUrl(url);
       setInputUrl(url);
@@ -87,7 +104,9 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           .then((site: string | null) => {
             setJobSite(site);
           })
-          .catch(() => {});
+          .catch(() => {
+            // Silently handle job site detection errors
+          });
       }
 
       if (onNavigationChange) {
@@ -95,7 +114,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       }
     };
 
-    const handleDidNavigateInPage = (event: any) => {
+    const handleDidNavigateInPage = (event: NavigationEvent) => {
       const url = event.url || webview.getURL();
       setCurrentUrl(url);
       setInputUrl(url);
@@ -107,7 +126,9 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           .then((site: string | null) => {
             setJobSite(site);
           })
-          .catch(() => {});
+          .catch(() => {
+            // Silently handle job site detection errors
+          });
       }
 
       if (onNavigationChange) {
@@ -115,40 +136,40 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       }
     };
 
-    const handlePageTitleUpdated = (event: any) => {
+    const handlePageTitleUpdated = (event: PageTitleEvent) => {
       setPageTitle(event.title);
       if (onNavigationChange) {
         onNavigationChange();
       }
     };
 
-    webview.addEventListener("dom-ready", handleDOMReady);
-    webview.addEventListener("did-start-loading", handleLoadStart);
-    webview.addEventListener("did-stop-loading", handleLoadStop);
-    webview.addEventListener("did-fail-load", handleDidFailLoad);
-    webview.addEventListener("did-navigate", handleDidNavigate);
-    webview.addEventListener("did-navigate-in-page", handleDidNavigateInPage);
-    webview.addEventListener("page-title-updated", handlePageTitleUpdated);
+    webview.addEventListener('dom-ready', handleDOMReady);
+    webview.addEventListener('did-start-loading', handleLoadStart);
+    webview.addEventListener('did-stop-loading', handleLoadStop);
+    webview.addEventListener('did-fail-load', handleDidFailLoad);
+    webview.addEventListener('did-navigate', handleDidNavigate);
+    webview.addEventListener('did-navigate-in-page', handleDidNavigateInPage);
+    webview.addEventListener('page-title-updated', handlePageTitleUpdated);
 
     return () => {
-      webview.removeEventListener("dom-ready", handleDOMReady);
-      webview.removeEventListener("did-start-loading", handleLoadStart);
-      webview.removeEventListener("did-stop-loading", handleLoadStop);
-      webview.removeEventListener("did-fail-load", handleDidFailLoad);
-      webview.removeEventListener("did-navigate", handleDidNavigate);
+      webview.removeEventListener('dom-ready', handleDOMReady);
+      webview.removeEventListener('did-start-loading', handleLoadStart);
+      webview.removeEventListener('did-stop-loading', handleLoadStop);
+      webview.removeEventListener('did-fail-load', handleDidFailLoad);
+      webview.removeEventListener('did-navigate', handleDidNavigate);
       webview.removeEventListener(
-        "did-navigate-in-page",
+        'did-navigate-in-page',
         handleDidNavigateInPage,
       );
-      webview.removeEventListener("page-title-updated", handlePageTitleUpdated);
+      webview.removeEventListener('page-title-updated', handlePageTitleUpdated);
     };
-  }, [currentUrl, onFormDetected, onNavigationChange]);
+  }, [currentUrl, onFormDetected, onNavigationChange, browserAPI]);
 
   const handleUrlSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (webviewRef.current) {
       let url = inputUrl;
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = `https://${url}`;
       }
       webviewRef.current.src = url;
@@ -233,9 +254,9 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           ref={webviewRef}
           src={currentUrl}
           style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
+            width: '100%',
+            height: '100%',
+            border: 'none',
           }}
           partition="persist:joby"
           webpreferences="contextIsolation=yes,nodeIntegration=no"

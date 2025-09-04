@@ -1,28 +1,28 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { ScrollArea } from "./scroll-area";
+import type { Meta, StoryObj } from '@storybook/react';
+import { ScrollArea } from './scroll-area';
 
 const meta = {
-  title: "Atoms/ScrollArea",
+  title: 'Atoms/ScrollArea',
   component: ScrollArea,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "A custom scrollable area component with configurable scroll direction. Provides consistent scrolling behavior across browsers.",
+          'A custom scrollable area component with configurable scroll direction. Provides consistent scrolling behavior across browsers.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     orientation: {
-      control: "select",
-      options: ["vertical", "horizontal", "both"],
-      description: "The scroll direction",
+      control: 'select',
+      options: ['vertical', 'horizontal', 'both'],
+      description: 'The scroll direction',
     },
     className: {
-      control: "text",
-      description: "Additional CSS classes",
+      control: 'text',
+      description: 'Additional CSS classes',
     },
   },
 } satisfies Meta<typeof ScrollArea>;
@@ -30,13 +30,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const longContent = Array.from({ length: 50 }, (_, i) => `Item ${i + 1}`).join(
-  ", ",
-);
-
 export const VerticalScroll: Story = {
   args: {
-    orientation: "vertical",
+    orientation: 'vertical',
   },
   render: (args) => (
     <ScrollArea {...args} className="h-[200px] w-[350px] rounded-md border p-4">
@@ -53,7 +49,7 @@ export const VerticalScroll: Story = {
 
 export const HorizontalScroll: Story = {
   args: {
-    orientation: "horizontal",
+    orientation: 'horizontal',
   },
   render: (args) => (
     <ScrollArea {...args} className="h-[100px] w-[350px] rounded-md border p-4">
@@ -73,7 +69,7 @@ export const HorizontalScroll: Story = {
 
 export const BothDirections: Story = {
   args: {
-    orientation: "both",
+    orientation: 'both',
   },
   render: (args) => (
     <ScrollArea {...args} className="h-[300px] w-[400px] rounded-md border p-4">
@@ -161,13 +157,13 @@ export const ChatMessages: Story = {
         {Array.from({ length: 20 }, (_, i) => (
           <div
             key={i}
-            className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+            className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}
           >
             <div
               className={`max-w-[70%] rounded-lg p-3 ${
                 i % 2 === 0
-                  ? "bg-gray-200 text-gray-800"
-                  : "bg-blue-500 text-white"
+                  ? 'bg-gray-200 text-gray-800'
+                  : 'bg-blue-500 text-white'
               }`}
             >
               <p className="text-sm">
@@ -216,9 +212,10 @@ const quickSort = (arr) => {
   return [...quickSort(left), ...middle, ...quickSort(right)];
 };
 
-console.log('Factorial of 5:', calculateFactorial(5));
-console.log('Fibonacci of 10:', fibonacci(10));
-console.log('Sorted array:', quickSort([3, 6, 8, 10, 1, 2, 1]));`}
+// Example outputs:
+// Factorial of 5: calculateFactorial(5) = 120
+// Fibonacci of 10: fibonacci(10) = 55
+// Sorted array: quickSort([3, 6, 8, 10, 1, 2, 1]) = [1, 1, 2, 3, 6, 8, 10]`}
       </pre>
     </ScrollArea>
   ),
@@ -253,17 +250,17 @@ export const Table: Story = {
                 <span
                   className={`px-2 py-1 rounded-full text-xs ${
                     i % 3 === 0
-                      ? "bg-green-100 text-green-800"
+                      ? 'bg-green-100 text-green-800'
                       : i % 3 === 1
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
                   }`}
                 >
                   {i % 3 === 0
-                    ? "Active"
+                    ? 'Active'
                     : i % 3 === 1
-                      ? "Pending"
-                      : "Inactive"}
+                      ? 'Pending'
+                      : 'Inactive'}
                 </span>
               </td>
             </tr>

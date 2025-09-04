@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Sidebar } from "./Sidebar";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Sidebar } from './Sidebar';
 import {
   Home,
   Settings,
@@ -7,25 +7,25 @@ import {
   FileText,
   BarChart,
   Package,
-} from "lucide-react";
+} from 'lucide-react';
 
 const meta = {
-  title: "Organisms/Layout/Sidebar",
+  title: 'Organisms/Layout/Sidebar',
   component: Sidebar,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     activeItem: {
-      control: "select",
+      control: 'select',
       options: [
-        "home",
-        "analytics",
-        "users",
-        "products",
-        "documents",
-        "settings",
+        'home',
+        'analytics',
+        'users',
+        'products',
+        'documents',
+        'settings',
       ],
     },
   },
@@ -36,40 +36,40 @@ type Story = StoryObj<typeof meta>;
 
 const customItems = [
   {
-    id: "home",
-    label: "Dashboard",
+    id: 'home',
+    label: 'Dashboard',
     icon: <Home className="h-5 w-5" />,
-    path: "/",
+    path: '/',
   },
   {
-    id: "analytics",
-    label: "Analytics",
+    id: 'analytics',
+    label: 'Analytics',
     icon: <BarChart className="h-5 w-5" />,
-    path: "/analytics",
+    path: '/analytics',
   },
   {
-    id: "users",
-    label: "Users",
+    id: 'users',
+    label: 'Users',
     icon: <Users className="h-5 w-5" />,
-    path: "/users",
+    path: '/users',
   },
   {
-    id: "products",
-    label: "Products",
+    id: 'products',
+    label: 'Products',
     icon: <Package className="h-5 w-5" />,
-    path: "/products",
+    path: '/products',
   },
   {
-    id: "documents",
-    label: "Documents",
+    id: 'documents',
+    label: 'Documents',
     icon: <FileText className="h-5 w-5" />,
-    path: "/documents",
+    path: '/documents',
   },
   {
-    id: "settings",
-    label: "Settings",
+    id: 'settings',
+    label: 'Settings',
     icon: <Settings className="h-5 w-5" />,
-    path: "/settings",
+    path: '/settings',
   },
 ];
 
@@ -79,7 +79,7 @@ export const Default: Story = {
 
 export const WithActiveItem: Story = {
   args: {
-    activeItem: "analytics",
+    activeItem: 'analytics',
     items: customItems,
   },
 };
@@ -87,17 +87,18 @@ export const WithActiveItem: Story = {
 export const CustomItems: Story = {
   args: {
     items: customItems,
-    activeItem: "home",
+    activeItem: 'home',
   },
 };
 
 export const Interactive: Story = {
   args: {
     items: customItems,
-    activeItem: "home",
+    activeItem: 'home',
     onItemClick: (item) => {
-      console.log("Clicked item:", item);
-      alert(`Navigating to: ${item.path}`);
+      action('item-clicked')(item);
+
+      // Navigation handled
     },
   },
 };
@@ -105,14 +106,14 @@ export const Interactive: Story = {
 export const CompactSidebar: Story = {
   args: {
     items: customItems.slice(0, 3),
-    activeItem: "home",
+    activeItem: 'home',
   },
 };
 
 export const WithCustomStyle: Story = {
   args: {
     items: customItems,
-    activeItem: "users",
-    className: "bg-blue-900",
+    activeItem: 'users',
+    className: 'bg-blue-900',
   },
 };

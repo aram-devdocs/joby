@@ -1,17 +1,17 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Separator } from "./separator";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Separator } from './separator';
 
 const meta = {
-  title: "Atoms/Separator",
+  title: 'Atoms/Separator',
   component: Separator,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     orientation: {
-      control: "select",
-      options: ["horizontal", "vertical"],
+      control: 'select',
+      options: ['horizontal', 'vertical'],
     },
   },
 } satisfies Meta<typeof Separator>;
@@ -21,11 +21,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Horizontal: Story = {
   args: {
-    orientation: "horizontal",
+    orientation: 'horizontal',
   },
   decorators: [
     (Story) => (
-      <div style={{ width: "300px" }}>
+      <div style={{ width: '300px' }}>
         <div>Content above</div>
         <Story />
         <div>Content below</div>
@@ -36,11 +36,11 @@ export const Horizontal: Story = {
 
 export const Vertical: Story = {
   args: {
-    orientation: "vertical",
+    orientation: 'vertical',
   },
   decorators: [
     (Story) => (
-      <div style={{ display: "flex", height: "100px", alignItems: "center" }}>
+      <div style={{ display: 'flex', height: '100px', alignItems: 'center' }}>
         <div>Left content</div>
         <Story />
         <div>Right content</div>
@@ -51,14 +51,14 @@ export const Vertical: Story = {
 
 export const InList: Story = {
   render: () => (
-    <div style={{ width: "300px" }}>
-      <div style={{ padding: "12px 0" }}>Item 1</div>
+    <div style={{ width: '300px' }}>
+      <div style={{ padding: '12px 0' }}>Item 1</div>
       <Separator />
-      <div style={{ padding: "12px 0" }}>Item 2</div>
+      <div style={{ padding: '12px 0' }}>Item 2</div>
       <Separator />
-      <div style={{ padding: "12px 0" }}>Item 3</div>
+      <div style={{ padding: '12px 0' }}>Item 3</div>
       <Separator />
-      <div style={{ padding: "12px 0" }}>Item 4</div>
+      <div style={{ padding: '12px 0' }}>Item 4</div>
     </div>
   ),
 };
@@ -67,22 +67,22 @@ export const InSidebar: Story = {
   render: () => (
     <div
       style={{
-        display: "flex",
-        width: "400px",
-        height: "200px",
-        backgroundColor: "#f3f4f6",
-        borderRadius: "8px",
-        overflow: "hidden",
+        display: 'flex',
+        width: '400px',
+        height: '200px',
+        backgroundColor: '#f3f4f6',
+        borderRadius: '8px',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ width: "150px", padding: "16px" }}>
-        <h3 style={{ margin: "0 0 8px 0" }}>Sidebar</h3>
-        <p style={{ fontSize: "14px", margin: 0 }}>Navigation items</p>
+      <div style={{ width: '150px', padding: '16px' }}>
+        <h3 style={{ margin: '0 0 8px 0' }}>Sidebar</h3>
+        <p style={{ fontSize: '14px', margin: 0 }}>Navigation items</p>
       </div>
       <Separator orientation="vertical" />
-      <div style={{ flex: 1, padding: "16px" }}>
-        <h3 style={{ margin: "0 0 8px 0" }}>Main Content</h3>
-        <p style={{ fontSize: "14px", margin: 0 }}>Content area</p>
+      <div style={{ flex: 1, padding: '16px' }}>
+        <h3 style={{ margin: '0 0 8px 0' }}>Main Content</h3>
+        <p style={{ fontSize: '14px', margin: 0 }}>Content area</p>
       </div>
     </div>
   ),
@@ -90,10 +90,10 @@ export const InSidebar: Story = {
 
 export const WithSpacing: Story = {
   render: () => (
-    <div style={{ width: "300px" }}>
-      <h3 style={{ margin: "0 0 16px 0" }}>Section Title</h3>
+    <div style={{ width: '300px' }}>
+      <h3 style={{ margin: '0 0 16px 0' }}>Section Title</h3>
       <Separator />
-      <p style={{ margin: "16px 0 0 0", fontSize: "14px" }}>
+      <p style={{ margin: '16px 0 0 0', fontSize: '14px' }}>
         Section content goes here with proper spacing around the separator.
       </p>
     </div>
@@ -102,20 +102,20 @@ export const WithSpacing: Story = {
 
 export const CustomStyling: Story = {
   render: () => (
-    <div style={{ width: "300px" }}>
-      <div style={{ padding: "8px 0" }}>Default separator</div>
+    <div style={{ width: '300px' }}>
+      <div style={{ padding: '8px 0' }}>Default separator</div>
       <Separator />
-      <div style={{ padding: "8px 0" }}>Thick separator</div>
+      <div style={{ padding: '8px 0' }}>Thick separator</div>
       <Separator className="h-[2px] bg-gray-400" />
-      <div style={{ padding: "8px 0" }}>Dashed separator</div>
+      <div style={{ padding: '8px 0' }}>Dashed separator</div>
       <div
         style={{
-          height: "1px",
+          height: '1px',
           background:
-            "repeating-linear-gradient(to right, #9ca3af 0px, #9ca3af 4px, transparent 4px, transparent 8px)",
+            'repeating-linear-gradient(to right, #9ca3af 0px, #9ca3af 4px, transparent 4px, transparent 8px)',
         }}
       />
-      <div style={{ padding: "8px 0" }}>Content below</div>
+      <div style={{ padding: '8px 0' }}>Content below</div>
     </div>
   ),
 };

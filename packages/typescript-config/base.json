@@ -14,6 +14,38 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES2022"
+    "target": "ES2022",
+
+    // Additional strict type checking
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+
+    // Code quality
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Module resolution
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": false,
+    "verbatimModuleSyntax": false,
+
+    // Emit options
+    "removeComments": false,
+    "sourceMap": true,
+    "inlineSources": false,
+    "preserveWatchOutput": true,
+    "pretty": true
   }
 }

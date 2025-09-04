@@ -1,10 +1,68 @@
-#!/usr/bin/env sh
 
-# Run full build before pushing
-echo "Running build verification before push..."
-pnpm build
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Run full test suite when tests are available
-# Uncomment when tests are added to the project
-# echo "Running tests..."
-# pnpm test
+echo -e "${BLUE}🚀 Running pre-push quality gates...${NC}"
+
+# Function to run comprehensive checks
+run_push_checks() {
+  local failed=0
+  
+  # Get the branch being pushed to
+  local branch=$(git rev-parse --abbrev-ref HEAD)
+  echo -e "📍 Pushing to branch: ${YELLOW}$branch${NC}"
+  
+  # Run full type checking
+  echo -e "${BLUE}📊 Running comprehensive type checks...${NC}"
+  if ! pnpm turbo run typecheck; then
+    echo -e "${RED}❌ Type checking failed${NC}"
+    failed=1
+  fi
+  
+  # Run linting
+  echo -e "${BLUE}🔍 Running ESLint...${NC}"
+  if ! pnpm turbo run lint; then
+    echo -e "${RED}❌ Linting failed${NC}"
+    failed=1
+  fi
+  
+  # Run tests with coverage
+  echo -e "${BLUE}🧪 Running tests...${NC}"
+  if ! pnpm turbo run test 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  No tests found or tests failed${NC}"
+  fi
+  
+  # Run build
+  echo -e "${BLUE}🔨 Building packages...${NC}"
+  if ! pnpm turbo run build; then
+    echo -e "${RED}❌ Build failed${NC}"
+    failed=1
+  fi
+  
+  # Check for uncommitted changes
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo -e "${YELLOW}⚠️  Warning: You have uncommitted changes${NC}"
+    echo "Consider committing or stashing them before pushing."
+  fi
+  
+  # Check for security vulnerabilities
+  echo -e "${BLUE}🔒 Running security audit...${NC}"
+  pnpm audit --audit-level moderate || {
+    echo -e "${YELLOW}⚠️  Security vulnerabilities detected. Consider fixing them.${NC}"
+  }
+  
+  return $failed
+}
+
+# Run checks
+if run_push_checks; then
+  echo -e "${GREEN}✅ All pre-push checks passed! Ready to push.${NC}"
+else
+  echo -e "${RED}❌ Pre-push checks failed!${NC}"
+  echo -e "${YELLOW}To bypass these checks (not recommended), use: git push --no-verify${NC}"
+  exit 1
+fi

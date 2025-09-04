@@ -1,26 +1,26 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { SplitPanel } from "./SplitPanel";
+import type { Meta, StoryObj } from '@storybook/react';
+import { SplitPanel } from './SplitPanel';
 
 const meta = {
-  title: "Organisms/Layout/SplitPanel",
+  title: 'Organisms/Layout/SplitPanel',
   component: SplitPanel,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     defaultSplit: {
-      control: { type: "range", min: 20, max: 80, step: 5 },
-      description: "Initial split percentage for the left panel",
+      control: { type: 'range', min: 20, max: 80, step: 5 },
+      description: 'Initial split percentage for the left panel',
     },
     minSize: {
-      control: { type: "range", min: 10, max: 40, step: 5 },
-      description: "Minimum size percentage for each panel",
+      control: { type: 'range', min: 10, max: 40, step: 5 },
+      description: 'Minimum size percentage for each panel',
     },
   },
   decorators: [
     (Story) => (
-      <div style={{ height: "500px", width: "100%" }}>
+      <div style={{ height: '500px', width: '100%' }}>
         <Story />
       </div>
     ),
@@ -135,7 +135,7 @@ export const CodeEditor: Story = {
         <div className="text-xs text-gray-500 mb-2">// Code Editor</div>
         <pre className="text-sm">
           {`function hello() {
-  console.log("Hello, World!");
+  // Example: Output "Hello, World!" to the console
   return true;
 }
 

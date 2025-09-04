@@ -1,5 +1,4 @@
-import React from "react";
-import { OllamaChat } from "../molecules/OllamaChat";
+import { OllamaChat } from '../molecules/OllamaChat';
 
 export interface OllamaPageProps {
   onSendPrompt: (model: string, prompt: string) => Promise<string>;
@@ -20,7 +19,7 @@ export function OllamaPage({
         onSendPrompt={onSendPrompt}
         onGetModels={onGetModels}
         onSetHost={onSetHost}
-        initialHost={initialHost}
+        {...(initialHost && { initialHost })}
       />
     </div>
   );

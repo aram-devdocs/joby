@@ -1,59 +1,52 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Input, InputProps } from "./input";
-import { useState } from "react";
-import {
-  Search as SearchIcon,
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Calendar,
-} from "lucide-react";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Input } from './input';
+import { useState } from 'react';
+import { Search as SearchIcon, Mail, Lock, User } from 'lucide-react';
 
 const meta = {
-  title: "Atoms/Input",
+  title: 'Atoms/Input',
   component: Input,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "A versatile input component with support for all standard HTML input types and custom styling.",
+          'A versatile input component with support for all standard HTML input types and custom styling.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     type: {
-      control: "select",
+      control: 'select',
       options: [
-        "text",
-        "email",
-        "password",
-        "number",
-        "tel",
-        "date",
-        "time",
-        "search",
-        "url",
+        'text',
+        'email',
+        'password',
+        'number',
+        'tel',
+        'date',
+        'time',
+        'search',
+        'url',
       ],
-      description: "The type of input",
+      description: 'The type of input',
     },
     placeholder: {
-      control: "text",
-      description: "Placeholder text for the input",
+      control: 'text',
+      description: 'Placeholder text for the input',
     },
     disabled: {
-      control: "boolean",
-      description: "Whether the input is disabled",
+      control: 'boolean',
+      description: 'Whether the input is disabled',
     },
     required: {
-      control: "boolean",
-      description: "Whether the input is required",
+      control: 'boolean',
+      description: 'Whether the input is required',
     },
     readOnly: {
-      control: "boolean",
-      description: "Whether the input is read-only",
+      control: 'boolean',
+      description: 'Whether the input is read-only',
     },
   },
 } satisfies Meta<typeof Input>;
@@ -63,29 +56,29 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    type: "text",
-    placeholder: "Enter text...",
+    type: 'text',
+    placeholder: 'Enter text...',
   },
 };
 
 export const Email: Story = {
   args: {
-    type: "email",
-    placeholder: "email@example.com",
+    type: 'email',
+    placeholder: 'email@example.com',
   },
 };
 
 export const Password: Story = {
   args: {
-    type: "password",
-    placeholder: "Enter password",
+    type: 'password',
+    placeholder: 'Enter password',
   },
 };
 
 export const Number: Story = {
   args: {
-    type: "number",
-    placeholder: "Enter number",
+    type: 'number',
+    placeholder: 'Enter number',
     min: 0,
     max: 100,
   },
@@ -93,65 +86,67 @@ export const Number: Story = {
 
 export const Search: Story = {
   args: {
-    type: "search",
-    placeholder: "Search...",
+    type: 'search',
+    placeholder: 'Search...',
   },
 };
 
 export const Tel: Story = {
   args: {
-    type: "tel",
-    placeholder: "+1 (555) 000-0000",
+    type: 'tel',
+    placeholder: '+1 (555) 000-0000',
   },
 };
 
 export const Date: Story = {
   args: {
-    type: "date",
+    type: 'date',
   },
 };
 
 export const Time: Story = {
   args: {
-    type: "time",
+    type: 'time',
   },
 };
 
 export const Disabled: Story = {
   args: {
-    type: "text",
-    placeholder: "Disabled input",
+    type: 'text',
+    placeholder: 'Disabled input',
     disabled: true,
   },
 };
 
 export const ReadOnly: Story = {
   args: {
-    type: "text",
-    value: "Read-only text",
+    type: 'text',
+    value: 'Read-only text',
     readOnly: true,
   },
 };
 
 export const Required: Story = {
   args: {
-    type: "text",
-    placeholder: "Required field",
+    type: 'text',
+    placeholder: 'Required field',
     required: true,
   },
 };
 
 export const WithValue: Story = {
   args: {
-    type: "text",
-    value: "Pre-filled value",
-    onChange: () => {},
+    type: 'text',
+    value: 'Pre-filled value',
+    onChange: () => {
+      // This is a placeholder for demonstration
+    },
   },
 };
 
 export const Controlled: Story = {
   render: () => {
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState('');
     return (
       <div className="space-y-2">
         <Input
@@ -238,8 +233,8 @@ export const WithIcons: Story = {
 
 export const FileInput: Story = {
   args: {
-    type: "file",
-    accept: "image/*",
+    type: 'file',
+    accept: 'image/*',
   },
 };
 

@@ -1,32 +1,32 @@
-import React from "react";
+import React from 'react';
 import {
   HashRouter as Router,
   Routes,
   Route,
   useNavigate,
-} from "react-router-dom";
+} from 'react-router-dom';
 import {
   DashboardTemplate,
   BrowserPage,
   OllamaPage,
   BrowserProvider,
   BrowserAPI,
-} from "@packages/ui";
+} from '@packages/ui';
 
 // Create a wrapper component to handle navigation
 function DashboardWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [activeRoute, setActiveRoute] = React.useState("browser");
+  const [activeRoute, setActiveRoute] = React.useState('browser');
 
   React.useEffect(() => {
     // Set initial route
-    const path = window.location.hash.replace("#", "");
-    const routeId = path.split("/")[1] || "browser";
+    const path = window.location.hash.replace('#', '');
+    const routeId = path.split('/')[1] || 'browser';
     setActiveRoute(routeId);
   }, []);
 
   const handleNavigate = (path: string) => {
-    const routeId = path.split("/")[1] || "home";
+    const routeId = path.split('/')[1] || 'home';
     setActiveRoute(routeId);
     navigate(path);
   };
@@ -117,7 +117,7 @@ export const App: React.FC = () => {
     if (window.electronAPI?.ollama?.sendPrompt) {
       return window.electronAPI.ollama.sendPrompt(model, prompt);
     }
-    throw new Error("Ollama API not available");
+    throw new Error('Ollama API not available');
   };
 
   const handleGetModels = async () => {

@@ -1,17 +1,27 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import React from "react";
+import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 
 // Since BrowserView uses webview which requires Electron context,
 // we'll create a mock version for Storybook demonstration
+interface FormField {
+  name: string;
+  type: string;
+  placeholder: string;
+}
+
+interface Form {
+  fields: FormField[];
+}
+
 const MockBrowserView: React.FC<{
-  onFormDetected?: (forms: any) => void;
+  onFormDetected?: (forms: Form[]) => void;
   onNavigationChange?: () => void;
 }> = ({ onFormDetected, onNavigationChange }) => {
   const [currentUrl, setCurrentUrl] = React.useState(
-    "https://www.example-jobs.com",
+    'https://www.example-jobs.com',
   );
   const [inputUrl, setInputUrl] = React.useState(
-    "https://www.example-jobs.com",
+    'https://www.example-jobs.com',
   );
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -22,12 +32,12 @@ const MockBrowserView: React.FC<{
       setIsLoading(false);
       onNavigationChange?.();
       // Simulate form detection
-      if (inputUrl.includes("job") || inputUrl.includes("apply")) {
+      if (inputUrl.includes('job') || inputUrl.includes('apply')) {
         onFormDetected?.([
           {
             fields: [
-              { name: "name", type: "text", placeholder: "Full Name" },
-              { name: "email", type: "email", placeholder: "Email" },
+              { name: 'name', type: 'text', placeholder: 'Full Name' },
+              { name: 'email', type: 'email', placeholder: 'Email' },
             ],
           },
         ]);
@@ -61,7 +71,7 @@ const MockBrowserView: React.FC<{
           type="text"
           value={inputUrl}
           onChange={(e) => setInputUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleNavigate()}
+          onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
           className="flex-1 px-3 py-1.5 border rounded-md text-sm"
           placeholder="Enter URL..."
         />
@@ -90,13 +100,13 @@ const MockBrowserView: React.FC<{
             </p>
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
-                Current URL:{" "}
+                Current URL:{' '}
                 <code className="bg-blue-100 px-2 py-1 rounded">
                   {currentUrl}
                 </code>
               </p>
             </div>
-            {currentUrl.includes("job") && (
+            {currentUrl.includes('job') && (
               <div className="p-4 border-2 border-green-300 rounded-lg bg-green-50">
                 <h2 className="font-semibold text-green-800 mb-2">
                   Job Application Form Detected!
@@ -115,10 +125,10 @@ const MockBrowserView: React.FC<{
 };
 
 const meta = {
-  title: "Features/Browser/BrowserView",
+  title: 'Features/Browser/BrowserView',
   component: MockBrowserView,
   parameters: {
-    layout: "padded",
+    layout: 'padded',
     docs: {
       description: {
         component: `
@@ -138,15 +148,15 @@ The real component is used in Electron applications to browse job sites and auto
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     onFormDetected: {
-      action: "form-detected",
-      description: "Called when forms are detected on the page",
+      action: 'form-detected',
+      description: 'Called when forms are detected on the page',
     },
     onNavigationChange: {
-      action: "navigation-changed",
-      description: "Called when navigation occurs",
+      action: 'navigation-changed',
+      description: 'Called when navigation occurs',
     },
   },
 } satisfies Meta<typeof MockBrowserView>;
@@ -160,14 +170,14 @@ export const Default: Story = {
 
 export const JobSite: Story = {
   args: {},
-  play: async ({ args, canvasElement }) => {
+  play: async ({ canvasElement }) => {
     // Simulate navigating to a job site
     const input = canvasElement.querySelector(
       'input[type="text"]',
     ) as HTMLInputElement;
     if (input) {
-      input.value = "https://www.example-jobs.com/apply";
-      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+      input.value = 'https://www.example-jobs.com/apply';
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     }
   },
 };
@@ -175,11 +185,12 @@ export const JobSite: Story = {
 export const WithCallbacks: Story = {
   args: {
     onFormDetected: (forms) => {
-      console.log("Forms detected:", forms);
-      alert(`Detected ${forms.length} form(s) on the page!`);
+      action('forms-detected')(forms);
+
+      // Form detection handled silently
     },
     onNavigationChange: () => {
-      console.log("Navigation changed");
+      action('navigation-changed')();
     },
   },
 };

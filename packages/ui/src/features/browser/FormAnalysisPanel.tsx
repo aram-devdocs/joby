@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   Badge,
   ScrollArea,
   Separator,
-} from "../../atoms";
+} from '../../atoms';
 import {
   FileText,
   User,
@@ -17,7 +17,7 @@ import {
   GraduationCap,
   Paperclip,
   Hash,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface FormField {
   name?: string;
@@ -40,33 +40,33 @@ export const FormAnalysisPanel: React.FC<FormAnalysisPanelProps> = ({
 }) => {
   const getFieldIcon = (field: FormField) => {
     const text =
-      `${field.name || ""} ${field.id || ""} ${field.placeholder || ""}`.toLowerCase();
+      `${field.name || ''} ${field.id || ''} ${field.placeholder || ''}`.toLowerCase();
 
     if (
-      text.includes("name") ||
-      text.includes("first") ||
-      text.includes("last")
+      text.includes('name') ||
+      text.includes('first') ||
+      text.includes('last')
     ) {
       return <User className="h-4 w-4" />;
     }
-    if (text.includes("email")) {
+    if (text.includes('email')) {
       return <Mail className="h-4 w-4" />;
     }
     if (
-      text.includes("experience") ||
-      text.includes("work") ||
-      text.includes("job")
+      text.includes('experience') ||
+      text.includes('work') ||
+      text.includes('job')
     ) {
       return <Briefcase className="h-4 w-4" />;
     }
     if (
-      text.includes("education") ||
-      text.includes("school") ||
-      text.includes("degree")
+      text.includes('education') ||
+      text.includes('school') ||
+      text.includes('degree')
     ) {
       return <GraduationCap className="h-4 w-4" />;
     }
-    if (field.type === "file") {
+    if (field.type === 'file') {
       return <Paperclip className="h-4 w-4" />;
     }
     return <Hash className="h-4 w-4" />;
@@ -74,56 +74,56 @@ export const FormAnalysisPanel: React.FC<FormAnalysisPanelProps> = ({
 
   const getFieldCategory = (field: FormField): string => {
     const text =
-      `${field.name || ""} ${field.id || ""} ${field.placeholder || ""}`.toLowerCase();
+      `${field.name || ''} ${field.id || ''} ${field.placeholder || ''}`.toLowerCase();
 
     if (
-      text.includes("name") ||
-      text.includes("first") ||
-      text.includes("last")
+      text.includes('name') ||
+      text.includes('first') ||
+      text.includes('last')
     ) {
-      return "Personal";
+      return 'Personal';
     }
     if (
-      text.includes("email") ||
-      text.includes("phone") ||
-      text.includes("address")
+      text.includes('email') ||
+      text.includes('phone') ||
+      text.includes('address')
     ) {
-      return "Contact";
+      return 'Contact';
     }
     if (
-      text.includes("experience") ||
-      text.includes("work") ||
-      text.includes("job")
+      text.includes('experience') ||
+      text.includes('work') ||
+      text.includes('job')
     ) {
-      return "Experience";
+      return 'Experience';
     }
     if (
-      text.includes("education") ||
-      text.includes("school") ||
-      text.includes("degree")
+      text.includes('education') ||
+      text.includes('school') ||
+      text.includes('degree')
     ) {
-      return "Education";
+      return 'Education';
     }
-    if (field.type === "file") {
-      return "Documents";
+    if (field.type === 'file') {
+      return 'Documents';
     }
-    return "Other";
+    return 'Other';
   };
 
   const getCategoryBadgeVariant = (category: string) => {
     switch (category) {
-      case "Personal":
-        return "default";
-      case "Contact":
-        return "secondary";
-      case "Experience":
-        return "info";
-      case "Education":
-        return "success";
-      case "Documents":
-        return "warning";
+      case 'Personal':
+        return 'default';
+      case 'Contact':
+        return 'secondary';
+      case 'Experience':
+        return 'info';
+      case 'Education':
+        return 'success';
+      case 'Documents':
+        return 'warning';
       default:
-        return "outline";
+        return 'outline';
     }
   };
 
@@ -155,7 +155,7 @@ export const FormAnalysisPanel: React.FC<FormAnalysisPanelProps> = ({
           Form Analysis
         </CardTitle>
         <CardDescription>
-          {forms.length} form{forms.length !== 1 ? "s" : ""} detected with{" "}
+          {forms.length} form{forms.length !== 1 ? 's' : ''} detected with{' '}
           {forms.reduce((acc, form) => acc + form.fields.length, 0)} total
           fields
         </CardDescription>

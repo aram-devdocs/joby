@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 
 export interface BrowserConfig {
   userAgent?: string;
@@ -62,7 +62,7 @@ export class BrowserService extends EventEmitter {
 
   updateConfig(config: Partial<BrowserConfig>): void {
     this.config = { ...this.config, ...config };
-    this.emit("config-updated", this.config);
+    this.emit('config-updated', this.config);
   }
 
   getCurrentUrl(): string | undefined {
@@ -75,7 +75,7 @@ export class BrowserService extends EventEmitter {
 
   clearHistory(): void {
     this.history = [];
-    this.emit("history-cleared");
+    this.emit('history-cleared');
   }
 
   // Navigation tracking
@@ -87,14 +87,14 @@ export class BrowserService extends EventEmitter {
       timestamp: Date.now(),
     };
     this.history.push(event);
-    this.emit("navigation-start", event);
+    this.emit('navigation-start', event);
   }
 
   onNavigationComplete(url: string, title?: string): void {
     this.currentUrl = url;
     const event: NavigationEvent = {
       url,
-      title,
+      title: title ?? '',
       isMainFrame: true,
       timestamp: Date.now(),
     };
@@ -102,12 +102,12 @@ export class BrowserService extends EventEmitter {
     // Update the last history entry with title if available
     if (this.history.length > 0) {
       const lastEntry = this.history[this.history.length - 1];
-      if (lastEntry.url === url) {
+      if (lastEntry && lastEntry.url === url && title !== undefined) {
         lastEntry.title = title;
       }
     }
 
-    this.emit("navigation-complete", event);
+    this.emit('navigation-complete', event);
   }
 
   // Form detection helpers

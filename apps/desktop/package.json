@@ -4,9 +4,12 @@
   "description": "",
   "main": ".webpack/main",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"No tests for desktop app\"",
     "dev": "electron-forge start",
     "start": "electron-forge start",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit",
     "prebuild": "pnpm -F @packages/ui build && pnpm -F @packages/browser build && pnpm -F @packages/llm build",
     "build": "NODE_ENV=production electron-forge package",
     "package": "electron-forge package",
