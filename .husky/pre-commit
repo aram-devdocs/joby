@@ -6,3 +6,7 @@ npx lint-staged
 # Run type checking for TypeScript files
 echo "Running type checks..."
 pnpm check-types
+
+# Build Storybook to ensure all stories compile correctly
+echo "Building Storybook..."
+pnpm -F storybook build

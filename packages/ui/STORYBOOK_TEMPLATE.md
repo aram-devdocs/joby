@@ -71,14 +71,16 @@ import { OtherComponent } from "./OtherComponent";
 
 ### Title Categories
 
-Use these standard categories:
+Use these standard categories following Atomic Design principles:
 
-- `Components/` - Main UI components (Button, Input, Card, etc.)
-- `Core/` - Core utility components (Badge, Separator, Skeleton, etc.)
-- `Layout/` - Layout components (Sidebar, SplitPanel, Grid, etc.)
-- `Features/` - Feature-specific components (BrowserView, OllamaChat, etc.)
-- `Pages/` - Full page components
-- `Templates/` - Page templates
+- `Atoms/` - Basic building blocks (Button, Input, Card, Badge, Separator, Skeleton, Select, TextArea)
+- `Molecules/` - Combinations of atoms (HelloWorld, OllamaChat, TailwindTest)
+- `Organisms/Layout/` - Complex layout components (Sidebar, SplitPanel)
+- `Organisms/` - Other complex components
+- `Features/Browser/` - Browser-specific features (BrowserView, FormAnalysisPanel)
+- `Features/` - Other feature-specific components
+- `Templates/` - Page templates (DashboardTemplate)
+- `Pages/` - Full page components (BrowserPage, OllamaPage)
 
 ### Parameters
 
@@ -254,11 +256,11 @@ Here's a complete example following all best practices:
 
 ```tsx
 import type { Meta, StoryObj } from "@storybook/react";
-import { Input } from "./Input";
+import { Input } from "./input";
 import { useState } from "react";
 
 const meta = {
-  title: "Components/Input",
+  title: "Atoms/Input",
   component: Input,
   parameters: {
     layout: "centered",

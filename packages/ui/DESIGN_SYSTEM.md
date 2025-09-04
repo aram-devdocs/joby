@@ -96,16 +96,14 @@ function MyComponent() {
 }
 ```
 
-### With Theme Provider
+### Using Theme Tokens
 
 ```tsx
-import { ThemeProvider } from "@packages/ui";
+import { tokens } from "@packages/ui";
 
-function App() {
-  return (
-    <ThemeProvider defaultTheme="light">{/* Your app content */}</ThemeProvider>
-  );
-}
+// Access design tokens in your components
+const primaryColor = tokens.colors.primary[500];
+const spacing = tokens.spacing[4];
 ```
 
 ## Tailwind Configuration
@@ -160,23 +158,28 @@ pnpm storybook
 pnpm build
 ```
 
-## Migration Guide
+## Import Guide
 
-### From Legacy Components
-
-Components in `/components` are being migrated to the atomic structure:
-
-- `Button` → `/atoms/button`
-- `Card` → `/atoms/card`
-- `Sidebar` → `/organisms/sidebar`
-- `SplitPanel` → `/organisms/split-panel`
-
-Update imports:
+All components are exported from the main package entry point for convenience:
 
 ```tsx
-// Old
-import { Button } from "@packages/ui/components/Button";
+// Import individual components
+import { Button, Card, Input, Select, TextArea } from "@packages/ui";
 
-// New
-import { Button } from "@packages/ui";
+// Import types
+import type { ButtonProps, CardProps } from "@packages/ui";
+
+// Import utilities
+import { cn } from "@packages/ui";
+
+// Import design tokens
+import { tokens } from "@packages/ui";
 ```
+
+Components are organized internally following Atomic Design:
+
+- **Atoms**: `/atoms/` - button, input, card, badge, separator, skeleton, select, text-area
+- **Molecules**: `/molecules/` - HelloWorld, OllamaChat
+- **Organisms**: `/organisms/` - Sidebar, SplitPanel
+- **Templates**: `/templates/` - DashboardTemplate
+- **Pages**: `/pages/` - BrowserPage, OllamaPage

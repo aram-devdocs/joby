@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../atoms/card";
 import { Input } from "../atoms/input";
-import { Select } from "../atoms/Select";
-import { TextArea } from "../atoms/TextArea";
+import { Select } from "../atoms/select";
+import { TextArea } from "../atoms/text-area";
 import { Button } from "../atoms/button";
 
 export interface OllamaChatProps {
