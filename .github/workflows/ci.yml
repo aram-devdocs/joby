@@ -42,7 +42,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type checking
-        run: pnpm turbo run check-types
+        run: pnpm turbo run typecheck
 
       - name: Linting
         run: pnpm turbo run lint

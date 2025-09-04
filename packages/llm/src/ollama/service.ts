@@ -29,9 +29,8 @@ export class OllamaService {
         details: model.details,
       }));
     } catch (error) {
-      console.error('Failed to list Ollama models:', error);
       throw new Error(
-        'Failed to list models. Please ensure Ollama is running.',
+        `Failed to list models. Please ensure Ollama is running. ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -56,9 +55,8 @@ export class OllamaService {
         done: response.done,
       };
     } catch (error) {
-      console.error('Failed to send prompt to Ollama:', error);
       throw new Error(
-        'Failed to generate response. Please check your model selection and Ollama connection.',
+        `Failed to generate response. Please check your model selection and Ollama connection. ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -78,9 +76,8 @@ export class OllamaService {
         onChunk(part.response);
       }
     } catch (error) {
-      console.error('Failed to stream prompt to Ollama:', error);
       throw new Error(
-        'Failed to stream response. Please check your model selection and Ollama connection.',
+        `Failed to stream response. Please check your model selection and Ollama connection. ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -90,6 +87,9 @@ export class OllamaService {
   }
 
   getHost(): string {
-    return (this.client as any).config?.host || 'http://127.0.0.1:11434';
+    return (
+      (this.client as unknown as { config?: { host?: string } }).config?.host ||
+      'http://127.0.0.1:11434'
+    );
   }
 }

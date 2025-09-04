@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import { FormInfo, FormField } from './BrowserService';
 
 export class FormAnalyzer {
@@ -61,7 +62,7 @@ export class FormAnalyzer {
 
   private extractFieldInfo(
     $: cheerio.CheerioAPI,
-    $field: cheerio.Cheerio<any>,
+    $field: cheerio.Cheerio<AnyNode>,
     tagName: string,
   ): FormField | null {
     const type = $field.attr('type') || tagName;
@@ -106,7 +107,7 @@ export class FormAnalyzer {
         const $option = $(optionEl);
         const value = $option.val() as string;
         if (value) {
-          field.options!.push(value);
+          field.options?.push(value);
         }
       });
     }

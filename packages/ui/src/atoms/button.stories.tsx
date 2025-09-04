@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button, ButtonProps } from './button';
+import React from 'react';
+import { Button } from './button';
 import {
   Mail,
   Loader2,

@@ -3,8 +3,18 @@ import React from 'react';
 
 // Since BrowserView uses webview which requires Electron context,
 // we'll create a mock version for Storybook demonstration
+interface FormField {
+  name: string;
+  type: string;
+  placeholder: string;
+}
+
+interface Form {
+  fields: FormField[];
+}
+
 const MockBrowserView: React.FC<{
-  onFormDetected?: (forms: any) => void;
+  onFormDetected?: (forms: Form[]) => void;
   onNavigationChange?: () => void;
 }> = ({ onFormDetected, onNavigationChange }) => {
   const [currentUrl, setCurrentUrl] = React.useState(
@@ -160,7 +170,7 @@ export const Default: Story = {
 
 export const JobSite: Story = {
   args: {},
-  play: async ({ args, canvasElement }) => {
+  play: async ({ canvasElement }) => {
     // Simulate navigating to a job site
     const input = canvasElement.querySelector(
       'input[type="text"]',
@@ -176,7 +186,8 @@ export const WithCallbacks: Story = {
   args: {
     onFormDetected: (forms) => {
       action('forms-detected')(forms);
-      alert(`Detected ${forms.length} form(s) on the page!`);
+       
+      // Form detection handled silently
     },
     onNavigationChange: () => {
       action('navigation-changed')();

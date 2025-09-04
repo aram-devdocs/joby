@@ -18,7 +18,7 @@ export interface BrowserNavigationActions {
 }
 
 export function useBrowserNavigation(
-  initialUrl: string = 'https://www.google.com',
+  initialUrl = 'https://www.google.com',
 ): [BrowserNavigationState, BrowserNavigationActions] {
   const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [inputUrl, setInputUrl] = useState(initialUrl);

@@ -97,7 +97,8 @@ export const Interactive: Story = {
     activeItem: 'home',
     onItemClick: (item) => {
       action('item-clicked')(item);
-      alert(`Navigating to: ${item.path}`);
+       
+      // Navigation handled
     },
   },
 };

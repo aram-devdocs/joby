@@ -7,7 +7,7 @@
     "dev:desktop": "turbo run dev --filter=desktop",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
+    "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:watch": "vitest watch",

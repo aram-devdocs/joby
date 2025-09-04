@@ -14,6 +14,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --external react",
     "dev": "tsup src/index.ts --format cjs,esm --dts --external react --watch",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

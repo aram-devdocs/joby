@@ -23,7 +23,7 @@ run_parallel_checks() {
   # Run type checking
   (
     echo "🔍 Running type checks..."
-    pnpm check-types
+    pnpm typecheck
     echo $? > /tmp/type-check-status
   ) &
   pids+=($!)

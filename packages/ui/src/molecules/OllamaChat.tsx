@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../atoms/card';
 import { Input } from '../atoms/input';
 import { Select } from '../atoms/select';
@@ -29,7 +29,7 @@ export const OllamaChat: React.FC<OllamaChatProps> = ({
   const [error, setError] = useState('');
   const [hostLoading, setHostLoading] = useState(false);
 
-  const loadModels = async () => {
+  const loadModels = useCallback(async () => {
     try {
       setHostLoading(true);
       setError('');
@@ -45,19 +45,19 @@ export const OllamaChat: React.FC<OllamaChatProps> = ({
           setSelectedModel(firstOption.value);
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load models. Please check if Ollama is running.');
       setModels([]);
     } finally {
       setHostLoading(false);
     }
-  };
+  }, [onGetModels, selectedModel]);
 
   const handleHostUpdate = async () => {
     try {
       await onSetHost(host);
       await loadModels();
-    } catch (err) {
+    } catch {
       setError('Failed to connect to Ollama. Please check the URL.');
     }
   };
@@ -74,7 +74,7 @@ export const OllamaChat: React.FC<OllamaChatProps> = ({
       setResponse('');
       const result = await onSendPrompt(selectedModel, prompt);
       setResponse(result);
-    } catch (err) {
+    } catch {
       setError('Failed to generate response. Please try again.');
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ export const OllamaChat: React.FC<OllamaChatProps> = ({
 
   useEffect(() => {
     loadModels();
-  }, []);
+  }, [loadModels]);
 
   return (
     <div className="flex flex-col gap-4 max-w-4xl mx-auto">

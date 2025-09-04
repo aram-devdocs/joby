@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { HelloWorld, HelloWorldProps } from './HelloWorld';
+import { HelloWorld } from './HelloWorld';
 
 const meta = {
   title: 'Molecules/HelloWorld',
@@ -58,7 +58,8 @@ export const WithCustomHandler: Story = {
     name: 'Developer',
     onButtonClick: () => {
       action('custom-handler-executed')();
-      alert('Custom handler was called!');
+       
+      // Custom handler called
     },
   },
 };
@@ -90,10 +91,7 @@ export const Interactive: Story = {
       <HelloWorld
         name={randomName}
         onButtonClick={() => {
-          const newName = prompt('Enter your name:');
-          if (newName) {
-            alert(`Hello, ${newName}! Welcome to the app!`);
-          }
+          // Greeting handled with Sample User
         }}
       />
     );

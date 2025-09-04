@@ -1,14 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Input, InputProps } from './input';
+import { Input } from './input';
 import { useState } from 'react';
-import {
-  Search as SearchIcon,
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Calendar,
-} from 'lucide-react';
+import { Search as SearchIcon, Mail, Lock, User } from 'lucide-react';
 
 const meta = {
   title: 'Atoms/Input',
@@ -145,7 +138,9 @@ export const WithValue: Story = {
   args: {
     type: 'text',
     value: 'Pre-filled value',
-    onChange: () => {},
+    onChange: () => {
+      // This is a placeholder for demonstration
+    },
   },
 };
 

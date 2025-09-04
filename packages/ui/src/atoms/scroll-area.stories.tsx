@@ -30,10 +30,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const longContent = Array.from({ length: 50 }, (_, i) => `Item ${i + 1}`).join(
-  ', ',
-);
-
 export const VerticalScroll: Story = {
   args: {
     orientation: 'vertical',

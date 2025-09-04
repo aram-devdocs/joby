@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { OllamaChat, OllamaChatProps } from './OllamaChat';
+import { OllamaChat } from './OllamaChat';
 import { useState } from 'react';
 
 const meta = {
@@ -90,7 +90,7 @@ export const NoModelsAvailable: Story = {
     onSetHost: async (host: string) => {
       action('host-set')(host);
     },
-    onSendPrompt: async (model: string, prompt: string) => {
+    onSendPrompt: async (_model: string, _prompt: string) => {
       return "This shouldn't be reachable without models";
     },
   },
@@ -103,7 +103,7 @@ export const SlowResponse: Story = {
     onSetHost: async (host: string) => {
       action('host-set')(host);
     },
-    onSendPrompt: async (model: string, prompt: string) => {
+    onSendPrompt: async (_model: string, _prompt: string) => {
       action('simulating-slow-response')();
       await new Promise((resolve) => setTimeout(resolve, 3000));
       return 'This response took 3 seconds to generate. In a real scenario, this could be a complex query that requires more processing time.';

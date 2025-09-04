@@ -12,9 +12,16 @@ export interface ElectronAPI {
   };
   browser: {
     getCurrentUrl: () => Promise<string | undefined>;
-    getHistory: () => Promise<any[]>;
+    getHistory: () => Promise<
+      Array<{ url: string; title: string; timestamp: number }>
+    >;
     detectJobSite: (url: string) => Promise<string | null>;
-    analyzeHTML: (html: string) => Promise<{ forms: any[]; summary: string }>;
+    analyzeHTML: (html: string) => Promise<{
+      forms: Array<{
+        fields: Array<{ name: string; type: string; required: boolean }>;
+      }>;
+      summary: string;
+    }>;
     onNavigationStart: (url: string) => void;
     onNavigationComplete: (url: string, title?: string) => void;
   };

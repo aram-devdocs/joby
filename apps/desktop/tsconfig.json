@@ -5,6 +5,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "@packages/ui": ["../ui/src"]
     }

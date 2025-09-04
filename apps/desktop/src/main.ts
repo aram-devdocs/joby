@@ -6,9 +6,6 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 let mainWindow: BrowserWindow | null = null;
-let ollamaService: OllamaService;
-let browserService: BrowserService;
-let formAnalyzer: FormAnalyzer;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -49,12 +46,12 @@ app.on('activate', () => {
 });
 
 // Initialize services
-ollamaService = new OllamaService();
-browserService = new BrowserService();
-formAnalyzer = new FormAnalyzer();
+const ollamaService = new OllamaService();
+const browserService = new BrowserService();
+const formAnalyzer = new FormAnalyzer();
 
 // IPC handlers for Ollama
-ipcMain.handle('ollama:setHost', async (event, host: string) => {
+ipcMain.handle('ollama:setHost', async (_event, host: string) => {
   ollamaService.updateHost(host);
   return { success: true };
 });
@@ -66,7 +63,7 @@ ipcMain.handle('ollama:getModels', async () => {
 
 ipcMain.handle(
   'ollama:sendPrompt',
-  async (event, model: string, prompt: string) => {
+  async (_event, model: string, prompt: string) => {
     const response = await ollamaService.sendPrompt({ model, prompt });
     return response.response;
   },
@@ -81,23 +78,23 @@ ipcMain.handle('browser:getHistory', () => {
   return browserService.getHistory();
 });
 
-ipcMain.handle('browser:detectJobSite', (event, url: string) => {
+ipcMain.handle('browser:detectJobSite', (_event, url: string) => {
   return browserService.detectJobSite(url);
 });
 
-ipcMain.handle('browser:analyzeHTML', (event, html: string) => {
+ipcMain.handle('browser:analyzeHTML', (_event, html: string) => {
   const forms = formAnalyzer.analyzeHTML(html);
   const summary = formAnalyzer.generateFormSummary(forms);
   return { forms, summary };
 });
 
-ipcMain.on('browser:navigationStart', (event, url: string) => {
+ipcMain.on('browser:navigationStart', (_event, url: string) => {
   browserService.onNavigationStart(url);
 });
 
 ipcMain.on(
   'browser:navigationComplete',
-  (event, url: string, title?: string) => {
+  (_event, url: string, title?: string) => {
     browserService.onNavigationComplete(url, title);
   },
 );

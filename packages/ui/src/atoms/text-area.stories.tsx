@@ -29,7 +29,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const TextAreaWithState = (args: any) => {
+const TextAreaWithState = (args: React.ComponentProps<typeof TextArea>) => {
   const [value, setValue] = useState('');
   return <TextArea {...args} value={value} onChange={setValue} />;
 };
@@ -85,7 +85,9 @@ export const Disabled: Story = {
     return (
       <TextArea
         value={value}
-        onChange={() => {}}
+        onChange={() => {
+          // Disabled textarea does not handle changes
+        }}
         label="Read Only"
         disabled={true}
       />

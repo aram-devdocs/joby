@@ -2,21 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 // Mock the FormAnalysisPanel to avoid context issues
 // The real component is in ./FormAnalysisPanel but requires BrowserContext
-interface FormField {
-  name?: string;
-  type: string;
-  id?: string;
-  placeholder?: string;
-  required?: boolean;
-}
-
-interface FormData {
-  fields: FormField[];
-}
-
-interface FormAnalysisPanelProps {
-  forms: FormData[];
-}
 
 // Import the actual component
 import { FormAnalysisPanel } from './FormAnalysisPanel';

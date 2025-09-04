@@ -39,13 +39,23 @@ export default [js.configs.recommended, prettier, {
   },
   rules: {
     'no-unused-vars': 'off', // Turn off base rule for TypeScript files
-    '@typescript-eslint/no-unused-vars': ['warn', { 
+    '@typescript-eslint/no-unused-vars': ['error', { 
       argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_' 
+      varsIgnorePattern: '^_',
+      ignoreRestSiblings: true
     }],
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/no-empty-function': 'warn',
+    '@typescript-eslint/no-inferrable-types': 'warn',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
     'no-console': 'warn',
+    'no-debugger': 'error',
+    'no-alert': 'warn',
+    'prefer-const': 'error',
+    'no-var': 'error',
     'no-undef': 'off' // TypeScript handles this
   },
   settings: {
