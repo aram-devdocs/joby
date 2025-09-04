@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm turbo run build
+
       - name: Type checking
         run: pnpm turbo run typecheck
 
@@ -49,9 +52,6 @@ jobs:
 
       - name: Format check
         run: pnpm prettier --check "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}"
-
-      - name: Build packages
-        run: pnpm turbo run build
 
   security-scan:
     name: Security Scanning
@@ -105,6 +105,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm turbo run build
 
       - name: Run tests
         run: pnpm turbo run test || echo "No test scripts found"
@@ -169,6 +172,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm turbo run build
 
       - name: Build Storybook
         run: pnpm -F storybook build
