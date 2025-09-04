@@ -18,7 +18,7 @@ run_push_checks() {
   
   # Run full type checking
   echo -e "${BLUE}📊 Running comprehensive type checks...${NC}"
-  if ! pnpm turbo run check-types; then
+  if ! pnpm turbo run typecheck; then
     echo -e "${RED}❌ Type checking failed${NC}"
     failed=1
   fi
