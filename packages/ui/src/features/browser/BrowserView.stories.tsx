@@ -186,7 +186,7 @@ export const WithCallbacks: Story = {
   args: {
     onFormDetected: (forms) => {
       action('forms-detected')(forms);
-       
+
       // Form detection handled silently
     },
     onNavigationChange: () => {

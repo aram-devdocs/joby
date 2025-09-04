@@ -97,7 +97,7 @@ export const Interactive: Story = {
     activeItem: 'home',
     onItemClick: (item) => {
       action('item-clicked')(item);
-       
+
       // Navigation handled
     },
   },

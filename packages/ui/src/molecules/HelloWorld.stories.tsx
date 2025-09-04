@@ -58,7 +58,7 @@ export const WithCustomHandler: Story = {
     name: 'Developer',
     onButtonClick: () => {
       action('custom-handler-executed')();
-       
+
       // Custom handler called
     },
   },

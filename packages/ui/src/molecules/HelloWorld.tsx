@@ -14,7 +14,6 @@ export const HelloWorld: React.FC<HelloWorldProps> = ({
     if (onButtonClick) {
       onButtonClick();
     } else {
-       
       // Hello action handled
     }
   };
@@ -33,7 +32,6 @@ export const HelloWorld: React.FC<HelloWorldProps> = ({
           <Button
             variant="secondary"
             onClick={() => {
-               
               // Button click handled
             }}
           >
