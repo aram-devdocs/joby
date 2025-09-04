@@ -175,7 +175,7 @@ export const Default: Story = {
 ### 2. Story with State (for controlled components)
 
 ```tsx
-const ComponentWithState = (args: any) => {
+const ComponentWithState = (args: ComponentProps<typeof Component>) => {
   const [value, setValue] = useState('');
   return <Component {...args} value={value} onChange={setValue} />;
 };
@@ -306,7 +306,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // Wrapper for controlled component
-const InputWithState = (args: any) => {
+const InputWithState = (args: ComponentProps<typeof Input>) => {
   const [value, setValue] = useState('');
   return <Input {...args} value={value} onChange={setValue} />;
 };
