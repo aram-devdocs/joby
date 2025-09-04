@@ -62,6 +62,9 @@ export default [js.configs.recommended, prettier, {
     '**/out/**',
     '**/.turbo/**',
     '**/coverage/**',
-    '**/.webpack/**'
+    '**/.webpack/**',
+    '**/storybook-static/**',
+    '**/*.config.js',
+    '**/*.config.cjs'
   ]
 }, ...storybook.configs["flat/recommended"]];
