@@ -38,6 +38,7 @@ export default [
       'react-hooks': reactHooks
     },
     rules: {
+      'no-unused-vars': 'off', // Turn off base rule for TypeScript files
       '@typescript-eslint/no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_' 

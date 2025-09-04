@@ -7,6 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "electron-forge start",
     "start": "electron-forge start",
+    "prebuild": "pnpm -F @packages/ui build && pnpm -F @packages/browser build && pnpm -F @packages/llm build",
+    "build": "NODE_ENV=production electron-forge package",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
@@ -20,19 +22,31 @@
     "@electron-forge/maker-zip": "^7.8.3",
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
     "@electron-forge/plugin-webpack": "^7.8.3",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/electron": "^1.6.12",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.21",
     "css-loader": "^7.1.2",
     "electron": "^38.0.0",
+    "postcss": "^8.5.6",
+    "postcss-loader": "^8.2.0",
     "style-loader": "^4.0.0",
+    "tailwindcss": "^3.4.17",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@packages/browser": "workspace:^",
     "@packages/llm": "workspace:^",
     "@packages/ui": "workspace:^",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.542.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.8.2",
+    "tailwind-merge": "^3.3.1"
   }
 }
