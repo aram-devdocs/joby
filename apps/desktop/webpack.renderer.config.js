@@ -1,9 +1,11 @@
+const path = require("path");
+
 const rules = [
   {
     test: /\.tsx?$/,
     exclude: /node_modules/,
     use: {
-      loader: 'ts-loader',
+      loader: "ts-loader",
       options: {
         transpileOnly: true,
       },
@@ -11,7 +13,7 @@ const rules = [
   },
   {
     test: /\.css$/,
-    use: ['style-loader', 'css-loader'],
+    use: ["style-loader", "css-loader", "postcss-loader"],
   },
 ];
 
@@ -20,6 +22,14 @@ module.exports = {
     rules,
   },
   resolve: {
-    extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
+    extensions: [".js", ".ts", ".jsx", ".tsx", ".json"],
+    alias: {
+      "@packages/browser": path.resolve(
+        __dirname,
+        "../../packages/browser/dist",
+      ),
+      "@packages/llm": path.resolve(__dirname, "../../packages/llm/dist"),
+      "@packages/ui": path.resolve(__dirname, "../../packages/ui/dist"),
+    },
   },
 };

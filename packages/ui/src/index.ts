@@ -1,20 +1,27 @@
-export { Button } from './components/Button';
-export type { ButtonProps } from './components/Button';
+// Core components (atomic design - atoms)
+export * from "./core";
 
-export { HelloWorld } from './components/HelloWorld';
-export type { HelloWorldProps } from './components/HelloWorld';
+// Legacy components (to be refactored)
+export { Button as LegacyButton } from "./components/Button";
+export type { ButtonProps as LegacyButtonProps } from "./components/Button";
 
-export { Input } from './components/Input';
-export type { InputProps } from './components/Input';
+export { HelloWorld } from "./components/HelloWorld";
+export type { HelloWorldProps } from "./components/HelloWorld";
 
-export { Select } from './components/Select';
-export type { SelectProps, SelectOption } from './components/Select';
+export { Input as LegacyInput } from "./components/Input";
+export type { InputProps as LegacyInputProps } from "./components/Input";
 
-export { TextArea } from './components/TextArea';
-export type { TextAreaProps } from './components/TextArea';
+export { Select } from "./components/Select";
+export type { SelectProps, SelectOption } from "./components/Select";
 
-export { Card } from './components/Card';
-export type { CardProps } from './components/Card';
+export { TextArea } from "./components/TextArea";
+export type { TextAreaProps } from "./components/TextArea";
 
-export { OllamaChat } from './components/OllamaChat';
-export type { OllamaChatProps } from './components/OllamaChat';
+export { Card as LegacyCard } from "./components/Card";
+export type { CardProps as LegacyCardProps } from "./components/Card";
+
+export { OllamaChat } from "./components/OllamaChat";
+export type { OllamaChatProps } from "./components/OllamaChat";
+
+// Utils
+export { cn } from "./lib/utils";

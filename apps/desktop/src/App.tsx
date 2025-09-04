@@ -1,43 +1,32 @@
-import React, { useState } from 'react';
-import { OllamaChat } from '@packages/ui';
+import React, { useState } from "react";
+import { BrowserView } from "./components/BrowserView";
+import { FormAnalysisPanel } from "./components/FormAnalysisPanel";
+import { SplitPanel } from "./components/SplitPanel";
 
 export const App: React.FC = () => {
-  const handleSendPrompt = async (model: string, prompt: string): Promise<string> => {
-    try {
-      const response = await window.electronAPI.ollama.sendPrompt(model, prompt);
-      return response;
-    } catch (error) {
-      console.error('Failed to send prompt:', error);
-      throw error;
-    }
+  const [detectedForms, setDetectedForms] = useState<any[]>([]);
+
+  const handleFormDetected = (forms: any[]) => {
+    setDetectedForms(forms);
   };
 
-  const handleGetModels = async (): Promise<Array<{ name: string; modified_at: string }>> => {
-    try {
-      const models = await window.electronAPI.ollama.getModels();
-      return models;
-    } catch (error) {
-      console.error('Failed to get models:', error);
-      throw error;
-    }
-  };
-
-  const handleSetHost = async (host: string): Promise<void> => {
-    try {
-      await window.electronAPI.ollama.setHost(host);
-    } catch (error) {
-      console.error('Failed to set host:', error);
-      throw error;
-    }
+  const handleNavigationChange = () => {
+    // Clear forms when navigating to a new page
+    setDetectedForms([]);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <OllamaChat
-        onSendPrompt={handleSendPrompt}
-        onGetModels={handleGetModels}
-        onSetHost={handleSetHost}
-        initialHost="http://127.0.0.1:11434"
+    <div className="h-screen bg-gray-50">
+      <SplitPanel
+        left={
+          <BrowserView
+            onFormDetected={handleFormDetected}
+            onNavigationChange={handleNavigationChange}
+          />
+        }
+        right={<FormAnalysisPanel forms={detectedForms} />}
+        defaultSplit={65}
+        minSize={30}
       />
     </div>
   );
