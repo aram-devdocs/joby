@@ -1,0 +1,33 @@
+import React from "react";
+import { BrowserView } from "../features/browser/BrowserView";
+import { FormAnalysisPanel } from "../features/browser/FormAnalysisPanel";
+import { SplitPanel } from "../components/layout/SplitPanel";
+import { useBrowserContext } from "../features/browser/context/BrowserContext";
+
+export function BrowserPage() {
+  const { detectedForms, setDetectedForms, clearForms } = useBrowserContext();
+
+  const handleFormDetected = (forms: any[]) => {
+    setDetectedForms(forms);
+  };
+
+  const handleNavigationChange = () => {
+    clearForms();
+  };
+
+  return (
+    <div className="h-screen bg-gray-50">
+      <SplitPanel
+        left={
+          <BrowserView
+            onFormDetected={handleFormDetected}
+            onNavigationChange={handleNavigationChange}
+          />
+        }
+        right={<FormAnalysisPanel forms={detectedForms} />}
+        defaultSplit={65}
+        minSize={30}
+      />
+    </div>
+  );
+}

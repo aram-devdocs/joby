@@ -1,6 +1,22 @@
 // Core components (atomic design - atoms)
 export * from "./core";
 
+// Layout components
+export { SplitPanel } from "./components/layout/SplitPanel";
+export { Sidebar } from "./components/layout/Sidebar";
+export type { SidebarItem } from "./components/layout/Sidebar";
+
+// Features
+export * from "./features/browser";
+
+// Pages
+export { BrowserPage } from "./pages/BrowserPage";
+export { OllamaPage } from "./pages/OllamaPage";
+export type { OllamaPageProps } from "./pages/OllamaPage";
+
+// Templates
+export { DashboardTemplate } from "./templates/DashboardTemplate";
+
 // Legacy components (to be refactored)
 export { Button as LegacyButton } from "./components/Button";
 export type { ButtonProps as LegacyButtonProps } from "./components/Button";
