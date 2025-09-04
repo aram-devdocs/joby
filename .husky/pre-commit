@@ -1,5 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -33,21 +31,29 @@ run_parallel_checks() {
   # Check for console.log statements
   (
     echo "🚫 Checking for console.log statements..."
-    git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs -r grep -n 'console\.log' && {
-      echo -e "${RED}❌ Found console.log statements. Please remove them before committing.${NC}"
-      echo 1 > /tmp/console-check-status
-    } || {
+    files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' || true)
+    if [ -n "$files" ]; then
+      if echo "$files" | xargs grep -l 'console\.log' 2>/dev/null; then
+        echo -e "${RED}❌ Found console.log statements. Please remove them before committing.${NC}"
+        echo 1 > /tmp/console-check-status
+      else
+        echo 0 > /tmp/console-check-status
+      fi
+    else
       echo 0 > /tmp/console-check-status
-    }
+    fi
   ) &
   pids+=($!)
   
   # Check for TODO comments
   (
     echo "📋 Checking for TODO comments..."
-    git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs -r grep -n 'TODO\|FIXME\|HACK' && {
-      echo -e "${YELLOW}⚠️  Found TODO/FIXME/HACK comments. Consider addressing them.${NC}"
-    }
+    files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' || true)
+    if [ -n "$files" ]; then
+      if echo "$files" | xargs grep -l 'TODO\|FIXME\|HACK' 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  Found TODO/FIXME/HACK comments. Consider addressing them.${NC}"
+      fi
+    fi
   ) &
   pids+=($!)
   

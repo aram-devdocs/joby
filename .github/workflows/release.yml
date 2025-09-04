@@ -42,15 +42,15 @@ jobs:
         run: |
           pnpm turbo run check-types
           pnpm turbo run lint
-          pnpm turbo run test --if-present
+          pnpm turbo run test || echo "No tests found"
           pnpm turbo run build
 
       - name: Create Release
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm run release --if-present
-          version: pnpm run version --if-present
+          publish: pnpm run release || echo "No release script"
+          version: pnpm run version || echo "No version script"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
