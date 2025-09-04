@@ -5,3 +5,5 @@ export * from "./separator";
 export * from "./scroll-area";
 export * from "./badge";
 export * from "./skeleton";
+export * from "./select";
+export * from "./text-area";

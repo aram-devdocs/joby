@@ -8,7 +8,7 @@ import {
   Badge,
   ScrollArea,
   Separator,
-} from "../../core";
+} from "../../atoms";
 import {
   FileText,
   User,

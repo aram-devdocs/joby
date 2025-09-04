@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserView } from "../features/browser/BrowserView";
 import { FormAnalysisPanel } from "../features/browser/FormAnalysisPanel";
-import { SplitPanel } from "../components/layout/SplitPanel";
-import { useBrowserContext } from "../features/browser/context/BrowserContext";
+import { SplitPanel } from "../organisms/layout/SplitPanel";
+import { useBrowserContext } from "../contexts/browser/BrowserContext";
 
 export function BrowserPage() {
   const { detectedForms, setDetectedForms, clearForms } = useBrowserContext();

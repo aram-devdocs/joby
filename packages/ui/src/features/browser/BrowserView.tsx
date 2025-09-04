@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Badge, Card, CardHeader, CardTitle } from "../../core";
+import { Badge, Card, CardHeader, CardTitle } from "../../atoms";
 import { Globe, CheckCircle, Loader2 } from "lucide-react";
-import { useBrowserContext } from "./context/BrowserContext";
+import { useBrowserContext } from "../../contexts/browser/BrowserContext";
 
 interface BrowserViewProps {
   onFormDetected?: (forms: any) => void;

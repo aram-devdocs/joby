@@ -1,5 +1,5 @@
 import React from "react";
-import { Sidebar, SidebarItem } from "../components/layout/Sidebar";
+import { Sidebar, SidebarItem } from "../organisms/layout/Sidebar";
 import { cn } from "../lib/utils";
 
 interface DashboardTemplateProps {
