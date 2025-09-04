@@ -1,5 +1,7 @@
 const path = require("path");
 
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 const rules = [
   {
     test: /\.tsx?$/,
@@ -26,10 +28,18 @@ module.exports = {
     alias: {
       "@packages/browser": path.resolve(
         __dirname,
-        "../../packages/browser/src",
+        isDevelopment
+          ? "../../packages/browser/src"
+          : "../../packages/browser/dist",
       ),
-      "@packages/llm": path.resolve(__dirname, "../../packages/llm/src"),
-      "@packages/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      "@packages/llm": path.resolve(
+        __dirname,
+        isDevelopment ? "../../packages/llm/src" : "../../packages/llm/dist",
+      ),
+      "@packages/ui": path.resolve(
+        __dirname,
+        isDevelopment ? "../../packages/ui/src" : "../../packages/ui/dist",
+      ),
     },
   },
 };

@@ -7,6 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "electron-forge start",
     "start": "electron-forge start",
+    "prebuild": "pnpm -F @packages/ui build && pnpm -F @packages/browser build && pnpm -F @packages/llm build",
+    "build": "NODE_ENV=production electron-forge package",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
