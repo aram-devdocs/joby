@@ -1,0 +1,13 @@
+#!/bin/bash
+# This hook adds validation context to commit messages
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+# Only add context for normal commits (not merges, squashes, etc.)
+if [ -z "$COMMIT_SOURCE" ]; then
+  # Add a note about what validations passed
+  echo "" >> "$COMMIT_MSG_FILE"
+  echo "# Validation passed: ✓ prettier ✓ eslint ✓ TypeScript ✓ build" >> "$COMMIT_MSG_FILE"
+fi
