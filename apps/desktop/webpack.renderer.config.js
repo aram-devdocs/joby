@@ -26,10 +26,10 @@ module.exports = {
     alias: {
       "@packages/browser": path.resolve(
         __dirname,
-        "../../packages/browser/dist",
+        "../../packages/browser/src",
       ),
-      "@packages/llm": path.resolve(__dirname, "../../packages/llm/dist"),
-      "@packages/ui": path.resolve(__dirname, "../../packages/ui/dist"),
+      "@packages/llm": path.resolve(__dirname, "../../packages/llm/src"),
+      "@packages/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
   },
 };
