@@ -1,5 +1,5 @@
-import React from "react";
-import { Button } from "../atoms/button";
+import React from 'react';
+import { Button } from '../atoms/button';
 
 export interface HelloWorldProps {
   name?: string;
@@ -7,7 +7,7 @@ export interface HelloWorldProps {
 }
 
 export const HelloWorld: React.FC<HelloWorldProps> = ({
-  name = "World",
+  name = 'World',
   onButtonClick,
 }) => {
   const handleClick = () => {
@@ -31,7 +31,9 @@ export const HelloWorld: React.FC<HelloWorldProps> = ({
           <Button onClick={handleClick}>Click Me</Button>
           <Button
             variant="secondary"
-            onClick={() => console.log("Secondary clicked")}
+            onClick={() => {
+              // Secondary button click handler
+            }}
           >
             Console Log
           </Button>

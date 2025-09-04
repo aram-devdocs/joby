@@ -1,25 +1,25 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { TextArea } from "./text-area";
-import { useState } from "react";
+import type { Meta, StoryObj } from '@storybook/react';
+import { TextArea } from './text-area';
+import { useState } from 'react';
 
 const meta = {
-  title: "Atoms/TextArea",
+  title: 'Atoms/TextArea',
   component: TextArea,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     rows: {
-      control: { type: "number", min: 1, max: 20, step: 1 },
+      control: { type: 'number', min: 1, max: 20, step: 1 },
     },
     disabled: {
-      control: "boolean",
+      control: 'boolean',
     },
   },
   decorators: [
     (Story) => (
-      <div style={{ minWidth: "400px" }}>
+      <div style={{ minWidth: '400px' }}>
         <Story />
       </div>
     ),
@@ -30,58 +30,58 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const TextAreaWithState = (args: any) => {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   return <TextArea {...args} value={value} onChange={setValue} />;
 };
 
 export const Default: Story = {
   render: TextAreaWithState,
   args: {
-    placeholder: "Enter your message here...",
+    placeholder: 'Enter your message here...',
   },
 };
 
 export const WithLabel: Story = {
   render: TextAreaWithState,
   args: {
-    label: "Comments",
-    placeholder: "Share your thoughts...",
+    label: 'Comments',
+    placeholder: 'Share your thoughts...',
   },
 };
 
 export const WithInitialValue: Story = {
   render: (args) => {
     const [value, setValue] = useState(
-      "This is some initial text that appears in the textarea.",
+      'This is some initial text that appears in the textarea.',
     );
     return <TextArea {...args} value={value} onChange={setValue} />;
   },
   args: {
-    label: "Description",
+    label: 'Description',
   },
 };
 
 export const CustomRows: Story = {
   render: TextAreaWithState,
   args: {
-    label: "Extended Text",
+    label: 'Extended Text',
     rows: 8,
-    placeholder: "This textarea has 8 rows...",
+    placeholder: 'This textarea has 8 rows...',
   },
 };
 
 export const MinimalRows: Story = {
   render: TextAreaWithState,
   args: {
-    label: "Short Note",
+    label: 'Short Note',
     rows: 2,
-    placeholder: "Brief input area...",
+    placeholder: 'Brief input area...',
   },
 };
 
 export const Disabled: Story = {
   render: () => {
-    const [value] = useState("This textarea is disabled and cannot be edited.");
+    const [value] = useState('This textarea is disabled and cannot be edited.');
     return (
       <TextArea
         value={value}
@@ -109,7 +109,7 @@ anim id est laborum.`;
     return <TextArea {...args} value={value} onChange={setValue} />;
   },
   args: {
-    label: "Article Content",
+    label: 'Article Content',
     rows: 10,
   },
 };
@@ -117,7 +117,7 @@ anim id est laborum.`;
 export const FormExample: Story = {
   render: TextAreaWithState,
   args: {
-    label: "Feedback",
+    label: 'Feedback',
     placeholder: "We'd love to hear your feedback about our service...",
     rows: 5,
   },

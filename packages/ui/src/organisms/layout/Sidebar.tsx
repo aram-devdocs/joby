@@ -1,5 +1,5 @@
-import React from "react";
-import { cn } from "../../lib/utils";
+import React from 'react';
+import { cn } from '../../lib/utils';
 import {
   Globe,
   MessageSquare,
@@ -7,7 +7,7 @@ import {
   Settings,
   FileText,
   Home,
-} from "lucide-react";
+} from 'lucide-react';
 
 export interface SidebarItem {
   id: string;
@@ -25,40 +25,40 @@ interface SidebarProps {
 
 const defaultItems: SidebarItem[] = [
   {
-    id: "home",
-    label: "Home",
+    id: 'home',
+    label: 'Home',
     icon: <Home className="h-5 w-5" />,
-    path: "/",
+    path: '/',
   },
   {
-    id: "browser",
-    label: "Browser",
+    id: 'browser',
+    label: 'Browser',
     icon: <Globe className="h-5 w-5" />,
-    path: "/browser",
+    path: '/browser',
   },
   {
-    id: "ollama",
-    label: "AI Assistant",
+    id: 'ollama',
+    label: 'AI Assistant',
     icon: <MessageSquare className="h-5 w-5" />,
-    path: "/ollama",
+    path: '/ollama',
   },
   {
-    id: "applications",
-    label: "Applications",
+    id: 'applications',
+    label: 'Applications',
     icon: <Briefcase className="h-5 w-5" />,
-    path: "/applications",
+    path: '/applications',
   },
   {
-    id: "documents",
-    label: "Documents",
+    id: 'documents',
+    label: 'Documents',
     icon: <FileText className="h-5 w-5" />,
-    path: "/documents",
+    path: '/documents',
   },
   {
-    id: "settings",
-    label: "Settings",
+    id: 'settings',
+    label: 'Settings',
     icon: <Settings className="h-5 w-5" />,
-    path: "/settings",
+    path: '/settings',
   },
 ];
 
@@ -71,7 +71,7 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-gray-900 text-white w-64",
+        'flex flex-col h-full bg-gray-900 text-white w-64',
         className,
       )}
     >
@@ -92,11 +92,11 @@ export function Sidebar({
               <button
                 onClick={() => onItemClick?.(item)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  "hover:bg-gray-800",
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                  'hover:bg-gray-800',
                   activeItem === item.id
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "text-gray-300 hover:text-white",
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'text-gray-300 hover:text-white',
                 )}
               >
                 {item.icon}

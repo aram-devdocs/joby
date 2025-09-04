@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Button, ButtonProps } from "./button";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button, ButtonProps } from './button';
 import {
   Mail,
   Loader2,
@@ -8,49 +8,49 @@ import {
   Heart,
   Settings,
   Trash2,
-} from "lucide-react";
+} from 'lucide-react';
 
 const meta = {
-  title: "Atoms/Button",
+  title: 'Atoms/Button',
   component: Button,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "A versatile button component with multiple variants, sizes, and states. Built with class-variance-authority for consistent styling.",
+          'A versatile button component with multiple variants, sizes, and states. Built with class-variance-authority for consistent styling.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
+      control: 'select',
       options: [
-        "default",
-        "destructive",
-        "outline",
-        "secondary",
-        "ghost",
-        "link",
+        'default',
+        'destructive',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
       ],
-      description: "The visual style variant of the button",
+      description: 'The visual style variant of the button',
     },
     size: {
-      control: "select",
-      options: ["default", "sm", "lg", "icon"],
-      description: "The size of the button",
+      control: 'select',
+      options: ['default', 'sm', 'lg', 'icon'],
+      description: 'The size of the button',
     },
     disabled: {
-      control: "boolean",
-      description: "Whether the button is disabled",
+      control: 'boolean',
+      description: 'Whether the button is disabled',
     },
     asChild: {
-      control: "boolean",
-      description: "Whether to render as a child component",
+      control: 'boolean',
+      description: 'Whether to render as a child component',
     },
     onClick: {
-      action: "clicked",
+      action: 'clicked',
     },
   },
 } satisfies Meta<typeof Button>;
@@ -60,63 +60,63 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: "Click me",
-    variant: "default",
+    children: 'Click me',
+    variant: 'default',
   },
 };
 
 export const Destructive: Story = {
   args: {
-    children: "Delete",
-    variant: "destructive",
+    children: 'Delete',
+    variant: 'destructive',
   },
 };
 
 export const Outline: Story = {
   args: {
-    children: "Outline",
-    variant: "outline",
+    children: 'Outline',
+    variant: 'outline',
   },
 };
 
 export const Secondary: Story = {
   args: {
-    children: "Secondary",
-    variant: "secondary",
+    children: 'Secondary',
+    variant: 'secondary',
   },
 };
 
 export const Ghost: Story = {
   args: {
-    children: "Ghost",
-    variant: "ghost",
+    children: 'Ghost',
+    variant: 'ghost',
   },
 };
 
 export const Link: Story = {
   args: {
-    children: "Link Button",
-    variant: "link",
+    children: 'Link Button',
+    variant: 'link',
   },
 };
 
 export const Small: Story = {
   args: {
-    children: "Small Button",
-    size: "sm",
+    children: 'Small Button',
+    size: 'sm',
   },
 };
 
 export const Large: Story = {
   args: {
-    children: "Large Button",
-    size: "lg",
+    children: 'Large Button',
+    size: 'lg',
   },
 };
 
 export const Icon: Story = {
   args: {
-    size: "icon",
+    size: 'icon',
     children: <Settings className="h-4 w-4" />,
   },
 };
@@ -146,15 +146,15 @@ export const Loading: Story = {
 
 export const Disabled: Story = {
   args: {
-    children: "Disabled Button",
+    children: 'Disabled Button',
     disabled: true,
   },
 };
 
 export const AllVariants: Story = {
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Button variant="default">Default</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="destructive">Destructive</Button>
@@ -162,7 +162,7 @@ export const AllVariants: Story = {
         <Button variant="ghost">Ghost</Button>
         <Button variant="link">Link</Button>
       </div>
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Button variant="default" disabled>
           Default Disabled
         </Button>
@@ -188,7 +188,7 @@ export const AllVariants: Story = {
 
 export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
@@ -201,7 +201,7 @@ export const AllSizes: Story = {
 
 export const ButtonGroup: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: "4px" }}>
+    <div style={{ display: 'flex', gap: '4px' }}>
       <Button variant="outline">Previous</Button>
       <Button variant="outline">1</Button>
       <Button variant="default">2</Button>
@@ -213,7 +213,7 @@ export const ButtonGroup: Story = {
 
 export const IconButtons: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: "8px" }}>
+    <div style={{ display: 'flex', gap: '8px' }}>
       <Button size="icon" variant="default">
         <Heart className="h-4 w-4" />
       </Button>
@@ -235,10 +235,10 @@ export const IconButtons: Story = {
 
 export const FullWidth: Story = {
   args: {
-    children: "Full Width Button",
-    className: "w-full",
+    children: 'Full Width Button',
+    className: 'w-full',
   },
   parameters: {
-    layout: "padded",
+    layout: 'padded',
   },
 };

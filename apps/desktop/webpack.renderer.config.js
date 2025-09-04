@@ -1,13 +1,13 @@
-const path = require("path");
+const path = require('path');
 
-const isDevelopment = process.env.NODE_ENV !== "production";
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const rules = [
   {
     test: /\.tsx?$/,
     exclude: /node_modules/,
     use: {
-      loader: "ts-loader",
+      loader: 'ts-loader',
       options: {
         transpileOnly: true,
       },
@@ -15,7 +15,7 @@ const rules = [
   },
   {
     test: /\.css$/,
-    use: ["style-loader", "css-loader", "postcss-loader"],
+    use: ['style-loader', 'css-loader', 'postcss-loader'],
   },
 ];
 
@@ -24,21 +24,21 @@ module.exports = {
     rules,
   },
   resolve: {
-    extensions: [".js", ".ts", ".jsx", ".tsx", ".json"],
+    extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
     alias: {
-      "@packages/browser": path.resolve(
+      '@packages/browser': path.resolve(
         __dirname,
         isDevelopment
-          ? "../../packages/browser/src"
-          : "../../packages/browser/dist",
+          ? '../../packages/browser/src'
+          : '../../packages/browser/dist',
       ),
-      "@packages/llm": path.resolve(
+      '@packages/llm': path.resolve(
         __dirname,
-        isDevelopment ? "../../packages/llm/src" : "../../packages/llm/dist",
+        isDevelopment ? '../../packages/llm/src' : '../../packages/llm/dist',
       ),
-      "@packages/ui": path.resolve(
+      '@packages/ui': path.resolve(
         __dirname,
-        isDevelopment ? "../../packages/ui/src" : "../../packages/ui/dist",
+        isDevelopment ? '../../packages/ui/src' : '../../packages/ui/dist',
       ),
     },
   },

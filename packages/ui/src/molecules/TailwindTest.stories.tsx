@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from '@storybook/react';
 
 const TailwindTest = () => (
   <div className="p-8">
@@ -62,10 +62,10 @@ const TailwindTest = () => (
 );
 
 const meta = {
-  title: "Molecules/TailwindTest",
+  title: 'Molecules/TailwindTest',
   component: TailwindTest,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
 } satisfies Meta<typeof TailwindTest>;
 

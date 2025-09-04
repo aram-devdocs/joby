@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export interface SelectOption {
   value: string;
@@ -19,9 +19,9 @@ export const Select: React.FC<SelectProps> = ({
   value,
   onChange,
   options,
-  placeholder = "Select an option",
+  placeholder = 'Select an option',
   disabled = false,
-  className = "",
+  className = '',
   label,
 }) => {
   return (

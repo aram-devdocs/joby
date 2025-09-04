@@ -1,16 +1,16 @@
-import * as React from "react";
-import { cn } from "../lib/utils";
+import * as React from 'react';
+import { cn } from '../lib/utils';
 
 interface ScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
-  orientation?: "vertical" | "horizontal" | "both";
+  orientation?: 'vertical' | 'horizontal' | 'both';
 }
 
 const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(
-  ({ className, children, orientation = "vertical", ...props }, ref) => {
+  ({ className, children, orientation = 'vertical', ...props }, ref) => {
     const scrollClass = cn(
-      "relative overflow-auto",
-      orientation === "vertical" && "overflow-x-hidden",
-      orientation === "horizontal" && "overflow-y-hidden",
+      'relative overflow-auto',
+      orientation === 'vertical' && 'overflow-x-hidden',
+      orientation === 'horizontal' && 'overflow-y-hidden',
       className,
     );
 
@@ -21,6 +21,6 @@ const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(
     );
   },
 );
-ScrollArea.displayName = "ScrollArea";
+ScrollArea.displayName = 'ScrollArea';
 
 export { ScrollArea };

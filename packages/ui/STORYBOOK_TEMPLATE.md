@@ -1,6 +1,8 @@
 # Storybook Component Story Template
 
-This document provides standardized templates and guidelines for creating Storybook stories in this monorepo. AI coders should follow these patterns when creating new component stories.
+This document provides standardized templates and guidelines for creating
+Storybook stories in this monorepo. AI coders should follow these patterns when
+creating new component stories.
 
 ## Table of Contents
 
@@ -17,16 +19,16 @@ This document provides standardized templates and guidelines for creating Storyb
 Every story file should follow this structure:
 
 ```tsx
-import type { Meta, StoryObj } from "@storybook/react";
-import { ComponentName } from "./ComponentName";
+import type { Meta, StoryObj } from '@storybook/react';
+import { ComponentName } from './ComponentName';
 
 const meta = {
-  title: "Category/ComponentName",
+  title: 'Category/ComponentName',
   component: ComponentName,
   parameters: {
-    layout: "centered", // or "fullscreen" for full-page components
+    layout: 'centered', // or "fullscreen" for full-page components
   },
-  tags: ["autodocs"], // Enables automatic documentation
+  tags: ['autodocs'], // Enables automatic documentation
   argTypes: {
     // Define controls here
   },
@@ -55,16 +57,16 @@ export const Default: Story = {
 
 ```tsx
 // Required imports for every story
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from '@storybook/react';
 
 // For components with state
-import { useState } from "react";
+import { useState } from 'react';
 
 // Import the component
-import { ComponentName } from "./ComponentName";
+import { ComponentName } from './ComponentName';
 
 // Import any additional components used in stories
-import { OtherComponent } from "./OtherComponent";
+import { OtherComponent } from './OtherComponent';
 ```
 
 ## Meta Configuration
@@ -73,11 +75,13 @@ import { OtherComponent } from "./OtherComponent";
 
 Use these standard categories following Atomic Design principles:
 
-- `Atoms/` - Basic building blocks (Button, Input, Card, Badge, Separator, Skeleton, Select, TextArea)
+- `Atoms/` - Basic building blocks (Button, Input, Card, Badge, Separator,
+  Skeleton, Select, TextArea)
 - `Molecules/` - Combinations of atoms (HelloWorld, OllamaChat, TailwindTest)
 - `Organisms/Layout/` - Complex layout components (Sidebar, SplitPanel)
 - `Organisms/` - Other complex components
-- `Features/Browser/` - Browser-specific features (BrowserView, FormAnalysisPanel)
+- `Features/Browser/` - Browser-specific features (BrowserView,
+  FormAnalysisPanel)
 - `Features/` - Other feature-specific components
 - `Templates/` - Page templates (DashboardTemplate)
 - `Pages/` - Full page components (BrowserPage, OllamaPage)
@@ -162,8 +166,8 @@ argTypes: {
 ```tsx
 export const Default: Story = {
   args: {
-    label: "Click me",
-    variant: "primary",
+    label: 'Click me',
+    variant: 'primary',
   },
 };
 ```
@@ -172,14 +176,14 @@ export const Default: Story = {
 
 ```tsx
 const ComponentWithState = (args: any) => {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   return <Component {...args} value={value} onChange={setValue} />;
 };
 
 export const Controlled: Story = {
   render: ComponentWithState,
   args: {
-    placeholder: "Enter text...",
+    placeholder: 'Enter text...',
   },
 };
 ```
@@ -189,11 +193,11 @@ export const Controlled: Story = {
 ```tsx
 export const WithPadding: Story = {
   args: {
-    children: "Content",
+    children: 'Content',
   },
   decorators: [
     (Story) => (
-      <div style={{ padding: "2rem", backgroundColor: "#f3f4f6" }}>
+      <div style={{ padding: '2rem', backgroundColor: '#f3f4f6' }}>
         <Story />
       </div>
     ),
@@ -206,7 +210,7 @@ export const WithPadding: Story = {
 ```tsx
 export const AllVariants: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
       <Component variant="primary">Primary</Component>
       <Component variant="secondary">Secondary</Component>
       <Component variant="danger">Danger</Component>
@@ -220,11 +224,11 @@ export const AllVariants: Story = {
 ```tsx
 export const Interactive: Story = {
   args: {
-    label: "Click to test",
+    label: 'Click to test',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button");
+    const button = canvas.getByRole('button');
     await userEvent.click(button);
   },
 };
@@ -240,7 +244,8 @@ export const Interactive: Story = {
 4. **Add controls** - Make stories interactive with argTypes
 5. **Document edge cases** - Include disabled, loading, error states
 6. **Test responsiveness** - Include stories with different sizes
-7. **Use consistent naming** - Follow the pattern: Default, WithFeature, AllVariants
+7. **Use consistent naming** - Follow the pattern: Default, WithFeature,
+   AllVariants
 
 ### ❌ DON'T
 
@@ -248,48 +253,49 @@ export const Interactive: Story = {
 2. **Don't skip default story** - Always include a Default export
 3. **Don't use complex logic** - Keep stories simple and focused
 4. **Don't forget state** - Add state wrapper for controlled components
-5. **Don't ignore TypeScript** - Use proper types with `satisfies Meta<typeof Component>`
+5. **Don't ignore TypeScript** - Use proper types with
+   `satisfies Meta<typeof Component>`
 
 ## Complete Example
 
 Here's a complete example following all best practices:
 
 ```tsx
-import type { Meta, StoryObj } from "@storybook/react";
-import { Input } from "./input";
-import { useState } from "react";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Input } from './input';
+import { useState } from 'react';
 
 const meta = {
-  title: "Atoms/Input",
+  title: 'Atoms/Input',
   component: Input,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "A versatile input component with multiple variants and states.",
+          'A versatile input component with multiple variants and states.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     type: {
-      control: "select",
-      options: ["text", "email", "password", "number", "tel"],
-      description: "The type of input",
+      control: 'select',
+      options: ['text', 'email', 'password', 'number', 'tel'],
+      description: 'The type of input',
     },
     disabled: {
-      control: "boolean",
-      description: "Whether the input is disabled",
+      control: 'boolean',
+      description: 'Whether the input is disabled',
     },
     label: {
-      control: "text",
-      description: "Label for the input field",
+      control: 'text',
+      description: 'Label for the input field',
     },
   },
   decorators: [
     (Story) => (
-      <div style={{ minWidth: "300px" }}>
+      <div style={{ minWidth: '300px' }}>
         <Story />
       </div>
     ),
@@ -301,7 +307,7 @@ type Story = StoryObj<typeof meta>;
 
 // Wrapper for controlled component
 const InputWithState = (args: any) => {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   return <Input {...args} value={value} onChange={setValue} />;
 };
 
@@ -309,7 +315,7 @@ const InputWithState = (args: any) => {
 export const Default: Story = {
   render: InputWithState,
   args: {
-    placeholder: "Enter text...",
+    placeholder: 'Enter text...',
   },
 };
 
@@ -317,8 +323,8 @@ export const Default: Story = {
 export const WithLabel: Story = {
   render: InputWithState,
   args: {
-    label: "Your Name",
-    placeholder: "John Doe",
+    label: 'Your Name',
+    placeholder: 'John Doe',
   },
 };
 
@@ -326,9 +332,9 @@ export const WithLabel: Story = {
 export const Email: Story = {
   render: InputWithState,
   args: {
-    type: "email",
-    label: "Email Address",
-    placeholder: "user@example.com",
+    type: 'email',
+    label: 'Email Address',
+    placeholder: 'user@example.com',
   },
 };
 
@@ -336,8 +342,8 @@ export const Email: Story = {
 export const Disabled: Story = {
   render: InputWithState,
   args: {
-    label: "Disabled Input",
-    placeholder: "Cannot edit this",
+    label: 'Disabled Input',
+    placeholder: 'Cannot edit this',
     disabled: true,
   },
 };
@@ -345,13 +351,13 @@ export const Disabled: Story = {
 // Show all variants
 export const AllTypes: Story = {
   render: () => {
-    const [text, setText] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [number, setNumber] = useState("");
+    const [text, setText] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [number, setNumber] = useState('');
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Input
           type="text"
           label="Text"

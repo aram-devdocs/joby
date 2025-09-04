@@ -1,4 +1,3 @@
- 
 export interface ElectronAPI {
   platform: string;
   versions: {
@@ -20,7 +19,6 @@ export interface ElectronAPI {
     onNavigationComplete: (url: string, title?: string) => void;
   };
 }
- 
 
 declare global {
   interface Window {

@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Joby Design System provides a comprehensive set of reusable components built with React, TypeScript, and Tailwind CSS. It follows Atomic Design principles for better scalability and maintainability.
+The Joby Design System provides a comprehensive set of reusable components built
+with React, TypeScript, and Tailwind CSS. It follows Atomic Design principles
+for better scalability and maintainability.
 
 ## Architecture
 
@@ -11,9 +13,12 @@ The Joby Design System provides a comprehensive set of reusable components built
 Our design system follows the Atomic Design methodology:
 
 - **Atoms** (`/src/atoms/`): Basic building blocks - buttons, inputs, badges
-- **Molecules** (`/src/molecules/`): Combinations of atoms - form fields, card with actions
-- **Organisms** (`/src/organisms/`): Complex components - sidebars, navigation, panels
-- **Templates** (`/src/templates/`): Page layouts - dashboard, application templates
+- **Molecules** (`/src/molecules/`): Combinations of atoms - form fields, card
+  with actions
+- **Organisms** (`/src/organisms/`): Complex components - sidebars, navigation,
+  panels
+- **Templates** (`/src/templates/`): Page layouts - dashboard, application
+  templates
 - **Features** (`/src/features/`): Feature-specific implementations
 
 ## Theme System
@@ -84,7 +89,7 @@ Uses rem-based scale: 0.25rem (1), 0.5rem (2), 0.75rem (3), etc.
 ### Basic Example
 
 ```tsx
-import { Button, Card, Input } from "@packages/ui";
+import { Button, Card, Input } from '@packages/ui';
 
 function MyComponent() {
   return (
@@ -99,7 +104,7 @@ function MyComponent() {
 ### Using Theme Tokens
 
 ```tsx
-import { tokens } from "@packages/ui";
+import { tokens } from '@packages/ui';
 
 // Access design tokens in your components
 const primaryColor = tokens.colors.primary[500];
@@ -164,21 +169,22 @@ All components are exported from the main package entry point for convenience:
 
 ```tsx
 // Import individual components
-import { Button, Card, Input, Select, TextArea } from "@packages/ui";
+import { Button, Card, Input, Select, TextArea } from '@packages/ui';
 
 // Import types
-import type { ButtonProps, CardProps } from "@packages/ui";
+import type { ButtonProps, CardProps } from '@packages/ui';
 
 // Import utilities
-import { cn } from "@packages/ui";
+import { cn } from '@packages/ui';
 
 // Import design tokens
-import { tokens } from "@packages/ui";
+import { tokens } from '@packages/ui';
 ```
 
 Components are organized internally following Atomic Design:
 
-- **Atoms**: `/atoms/` - button, input, card, badge, separator, skeleton, select, text-area
+- **Atoms**: `/atoms/` - button, input, card, badge, separator, skeleton,
+  select, text-area
 - **Molecules**: `/molecules/` - HelloWorld, OllamaChat
 - **Organisms**: `/organisms/` - Sidebar, SplitPanel
 - **Templates**: `/templates/` - DashboardTemplate

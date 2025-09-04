@@ -1,23 +1,23 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Skeleton } from "./skeleton";
+import type { Meta, StoryObj } from '@storybook/react';
+import { Skeleton } from './skeleton';
 
 const meta = {
-  title: "Atoms/Skeleton",
+  title: 'Atoms/Skeleton',
   component: Skeleton,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "A skeleton loading component that provides animated placeholders while content is loading. Perfect for improving perceived performance.",
+          'A skeleton loading component that provides animated placeholders while content is loading. Perfect for improving perceived performance.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     className: {
-      control: "text",
-      description: "Additional CSS classes for custom styling",
+      control: 'text',
+      description: 'Additional CSS classes for custom styling',
     },
   },
 } satisfies Meta<typeof Skeleton>;
@@ -27,19 +27,19 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    className: "h-4 w-[250px]",
+    className: 'h-4 w-[250px]',
   },
 };
 
 export const Circle: Story = {
   args: {
-    className: "h-12 w-12 rounded-full",
+    className: 'h-12 w-12 rounded-full',
   },
 };
 
 export const Square: Story = {
   args: {
-    className: "h-24 w-24",
+    className: 'h-24 w-24',
   },
 };
 

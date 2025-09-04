@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 export interface BrowserNavigationState {
   currentUrl: string;
@@ -18,19 +18,19 @@ export interface BrowserNavigationActions {
 }
 
 export function useBrowserNavigation(
-  initialUrl: string = "https://www.google.com",
+  initialUrl: string = 'https://www.google.com',
 ): [BrowserNavigationState, BrowserNavigationActions] {
   const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [inputUrl, setInputUrl] = useState(initialUrl);
-  const [pageTitle, setPageTitle] = useState("");
+  const [pageTitle, setPageTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [jobSite, setJobSite] = useState<string | null>(null);
 
   const handleUrlSubmit = useCallback((url: string): string => {
     let processedUrl = url;
     if (
-      !processedUrl.startsWith("http://") &&
-      !processedUrl.startsWith("https://")
+      !processedUrl.startsWith('http://') &&
+      !processedUrl.startsWith('https://')
     ) {
       processedUrl = `https://${processedUrl}`;
     }

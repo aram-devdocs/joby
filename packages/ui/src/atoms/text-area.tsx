@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export interface TextAreaProps {
   value: string;
@@ -16,7 +16,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   placeholder,
   disabled = false,
   rows = 4,
-  className = "",
+  className = '',
   label,
 }) => {
   return (
