@@ -1,12 +1,76 @@
 #!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# Run lint-staged for incremental checks on staged files
-npx lint-staged
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# Run type checking for TypeScript files
-echo "Running type checks..."
-pnpm check-types
+echo "🔍 Running pre-commit quality checks..."
 
-# Build Storybook to ensure all stories compile correctly
-echo "Building Storybook..."
-pnpm -F storybook build
+# Function to run checks in parallel
+run_parallel_checks() {
+  local pids=()
+  local failed=0
+  
+  # Run lint-staged
+  (
+    echo "📝 Running lint-staged..."
+    npx lint-staged
+    echo $? > /tmp/lint-staged-status
+  ) &
+  pids+=($!)
+  
+  # Run type checking
+  (
+    echo "🔍 Running type checks..."
+    pnpm check-types
+    echo $? > /tmp/type-check-status
+  ) &
+  pids+=($!)
+  
+  # Check for console.log statements
+  (
+    echo "🚫 Checking for console.log statements..."
+    git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs -r grep -n 'console\.log' && {
+      echo -e "${RED}❌ Found console.log statements. Please remove them before committing.${NC}"
+      echo 1 > /tmp/console-check-status
+    } || {
+      echo 0 > /tmp/console-check-status
+    }
+  ) &
+  pids+=($!)
+  
+  # Check for TODO comments
+  (
+    echo "📋 Checking for TODO comments..."
+    git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs -r grep -n 'TODO\|FIXME\|HACK' && {
+      echo -e "${YELLOW}⚠️  Found TODO/FIXME/HACK comments. Consider addressing them.${NC}"
+    }
+  ) &
+  pids+=($!)
+  
+  # Wait for all background jobs
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+  
+  # Check results
+  [ -f /tmp/lint-staged-status ] && [ "$(cat /tmp/lint-staged-status)" != "0" ] && failed=1
+  [ -f /tmp/type-check-status ] && [ "$(cat /tmp/type-check-status)" != "0" ] && failed=1
+  [ -f /tmp/console-check-status ] && [ "$(cat /tmp/console-check-status)" != "0" ] && failed=1
+  
+  # Cleanup
+  rm -f /tmp/lint-staged-status /tmp/type-check-status /tmp/console-check-status
+  
+  return $failed
+}
+
+# Run checks
+if run_parallel_checks; then
+  echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
+else
+  echo -e "${RED}❌ Pre-commit checks failed. Please fix the issues above.${NC}"
+  exit 1
+fi

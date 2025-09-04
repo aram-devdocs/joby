@@ -1,0 +1,22 @@
+{
+  "name": "@packages/prettier-config",
+  "version": "1.0.0",
+  "description": "Shared Prettier configuration for the monorepo",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "scripts": {
+    "test": "echo \"No tests required for config package\""
+  },
+  "keywords": [
+    "prettier",
+    "config",
+    "formatting"
+  ],
+  "author": "",
+  "license": "MIT"
+}
