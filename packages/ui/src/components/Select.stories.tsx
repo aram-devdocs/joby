@@ -26,9 +26,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const SelectWithState = (args: any) => {
+const SelectWithState = (args: Partial<SelectProps>) => {
   const [value, setValue] = useState("");
-  return <Select {...args} value={value} onChange={setValue} />;
+  return (
+    <Select {...(args as SelectProps)} value={value} onChange={setValue} />
+  );
 };
 
 const countryOptions = [

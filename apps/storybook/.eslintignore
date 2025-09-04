@@ -1,0 +1,6 @@
+storybook-static
+dist
+build
+node_modules
+*.config.js
+*.config.cjs
