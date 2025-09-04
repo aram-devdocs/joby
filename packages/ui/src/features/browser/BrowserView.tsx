@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Badge, Card, CardHeader, CardTitle } from '../../atoms';
 import { Globe, CheckCircle, Loader2 } from 'lucide-react';
 import { useBrowserContext } from '../../contexts/browser/BrowserContext';
+import type {
+  WebviewElement,
+  NavigationEvent,
+  PageTitleEvent,
+} from '../../types/electron-webview';
 
 interface FormField {
   name: string;
@@ -25,8 +30,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   onNavigationChange,
 }) => {
   const { browserAPI } = useBrowserContext();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const webviewRef = useRef<any>(null); // Electron's webview element
+  const webviewRef = useRef<WebviewElement | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const [currentUrl, setCurrentUrl] = useState('https://www.google.com');
   const [inputUrl, setInputUrl] = useState('https://www.google.com');
@@ -48,7 +52,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
 
       // Inject form detection script
       webview
-        .executeJavaScript(
+        .executeJavaScript<Form[]>(
           `
         (function() {
           const forms = [];
@@ -73,7 +77,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
         })()
       `,
         )
-        .then((forms: Form[]) => {
+        .then((forms) => {
           if (forms.length > 0 && onFormDetected) {
             onFormDetected(forms);
           }
@@ -88,8 +92,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       setIsLoading(false);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleDidNavigate = (event: any) => {
+    const handleDidNavigate = (event: NavigationEvent) => {
       const url = event.url || webview.getURL();
       setCurrentUrl(url);
       setInputUrl(url);
@@ -111,8 +114,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleDidNavigateInPage = (event: any) => {
+    const handleDidNavigateInPage = (event: NavigationEvent) => {
       const url = event.url || webview.getURL();
       setCurrentUrl(url);
       setInputUrl(url);
@@ -134,8 +136,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handlePageTitleUpdated = (event: any) => {
+    const handlePageTitleUpdated = (event: PageTitleEvent) => {
       setPageTitle(event.title);
       if (onNavigationChange) {
         onNavigationChange();
