@@ -14,9 +14,23 @@ import {
   BrowserProvider,
   BrowserAPI,
 } from '@packages/ui';
+// Stream request interface (defined locally to avoid circular dependencies)
+interface StreamRequest {
+  model: string;
+  prompt: string;
+  context: string;
+  userPrompt?: string;
+  contextData?: Record<string, unknown>;
+}
 
 // Create a wrapper component to handle navigation
-function DashboardWrapper({ children }: { children: React.ReactNode }) {
+function DashboardWrapper({
+  children,
+  onStreamEvent,
+}: {
+  children: React.ReactNode;
+  onStreamEvent?: (callback: (event: unknown) => void) => () => void;
+}) {
   const navigate = useNavigate();
   const [activeRoute, setActiveRoute] = React.useState('browser');
 
@@ -34,7 +48,11 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <DashboardTemplate activeRoute={activeRoute} onNavigate={handleNavigate}>
+    <DashboardTemplate
+      activeRoute={activeRoute}
+      onNavigate={handleNavigate}
+      {...(onStreamEvent && { onStreamEvent })}
+    >
       {children}
     </DashboardTemplate>
   );
@@ -113,6 +131,35 @@ export const App: React.FC = () => {
     throw new Error('Ollama API not available');
   };
 
+  // Streaming handlers
+  const handleStreamPrompt = async (
+    request: StreamRequest,
+  ): Promise<string> => {
+    if (window.electronAPI?.ollama?.streamPrompt) {
+      return window.electronAPI.ollama.streamPrompt(request);
+    }
+    throw new Error('Ollama streaming API not available');
+  };
+
+  const handleCancelStream = async (
+    streamId: string,
+    reason?: string,
+  ): Promise<void> => {
+    if (window.electronAPI?.ollama?.cancelStream) {
+      await window.electronAPI.ollama.cancelStream(streamId, reason);
+    }
+  };
+
+  const handleOnStreamEvent = (callback: (event: unknown) => void) => {
+    if (window.electronAPI?.ollama?.onStreamEvent) {
+      return window.electronAPI.ollama.onStreamEvent(callback);
+    }
+    // Return empty cleanup function if no streaming support
+    return () => {
+      // No cleanup needed when streaming is not supported
+    };
+  };
+
   const handleGetModelObjects = async () => {
     if (window.electronAPI?.ollama?.getModels) {
       return window.electronAPI.ollama.getModels();
@@ -188,7 +235,7 @@ export const App: React.FC = () => {
   return (
     <Router>
       <BrowserProvider browserAPI={browserAPI}>
-        <DashboardWrapper>
+        <DashboardWrapper onStreamEvent={handleOnStreamEvent}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route
@@ -207,6 +254,9 @@ export const App: React.FC = () => {
                   onSendPrompt={handleSendPrompt}
                   onGetModels={handleGetModelObjects}
                   onSetHost={handleSetHost}
+                  onStreamPrompt={handleStreamPrompt}
+                  onCancelStream={handleCancelStream}
+                  onStreamEvent={handleOnStreamEvent}
                 />
               }
             />

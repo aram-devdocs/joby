@@ -1,12 +1,13 @@
 import type { FieldEnhancer, FieldContext, FieldEnhancement } from '../types';
-import { OllamaService } from '@packages/llm';
+import { OllamaServiceAdapter, type StreamContext } from '@packages/llm';
 
 export class LLMEnhancer implements FieldEnhancer {
   name = 'LLMEnhancer';
   priority = 2;
   isEnabled = true;
 
-  private ollamaService: OllamaService;
+  private ollamaService: OllamaServiceAdapter;
+  private streamingEnabled: boolean;
   private model: string;
   private maxRetries: number;
   private timeoutMs: number;
@@ -24,20 +25,42 @@ export class LLMEnhancer implements FieldEnhancer {
     this.maxRetries = config?.maxRetries || 2;
     this.timeoutMs = config?.timeoutMs || 5000;
 
-    this.ollamaService = new OllamaService({
+    this.ollamaService = new OllamaServiceAdapter({
       host: config?.ollamaHost || 'http://127.0.0.1:11434',
     });
+    this.streamingEnabled = true; // Enable streaming by default for enhanced debugging
   }
 
   async testConnection(): Promise<boolean> {
     try {
-      // Try to get models list to test connection
-      const models = await this.ollamaService.listModels();
-      return models && models.length > 0;
+      // Use enhanced connection test from adapter
+      const result = await this.ollamaService.testConnection();
+      return result.connected;
     } catch {
       // Connection failed
       return false;
     }
+  }
+
+  /**
+   * Enable or disable streaming mode for debugging
+   */
+  setStreamingEnabled(enabled: boolean): void {
+    this.streamingEnabled = enabled;
+  }
+
+  /**
+   * Get the underlying stream manager for advanced operations
+   */
+  getStreamManager() {
+    return this.ollamaService.getStreamManager();
+  }
+
+  /**
+   * Update the Ollama host for both legacy and streaming services
+   */
+  updateHost(host: string): void {
+    this.ollamaService.updateHost(host);
   }
 
   canEnhance(context: FieldContext): boolean {
@@ -62,7 +85,7 @@ export class LLMEnhancer implements FieldEnhancer {
         );
       });
 
-      const enhancementPromise = this.queryLLM(prompt);
+      const enhancementPromise = this.queryLLM(prompt, context);
 
       const result = await Promise.race([enhancementPromise, timeoutPromise]);
       return result;
@@ -113,13 +136,40 @@ Response format (JSON only):
 }`;
   }
 
-  private async queryLLM(prompt: string): Promise<FieldEnhancement | null> {
+  private async queryLLM(
+    prompt: string,
+    fieldContext?: FieldContext,
+  ): Promise<FieldEnhancement | null> {
     for (let i = 0; i < this.maxRetries; i++) {
       try {
-        const response = await this.ollamaService.sendPrompt({
-          model: this.model,
-          prompt,
-        });
+        const streamContext: StreamContext = 'form-analysis';
+        const contextData = fieldContext
+          ? {
+              fieldId: fieldContext.element.id || 'unknown',
+              fieldName: fieldContext.element.name || 'unknown',
+              fieldType: fieldContext.element.type || 'unknown',
+              formUrl: fieldContext.pageContext?.pageUrl || 'unknown',
+              performance: {
+                startTime: Date.now(),
+                retryAttempt: i + 1,
+              },
+            }
+          : undefined;
+
+        const response =
+          this.streamingEnabled && fieldContext
+            ? await this.ollamaService.sendPrompt(
+                {
+                  model: this.model,
+                  prompt,
+                },
+                streamContext,
+                contextData,
+              )
+            : await this.ollamaService.sendPrompt({
+                model: this.model,
+                prompt,
+              });
 
         const parsed = this.parseResponse(response.response);
         if (parsed) {

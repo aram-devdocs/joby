@@ -19,6 +19,18 @@ declare global {
         models?: Array<string | { name: string; [key: string]: unknown }>;
       }>;
       sendPrompt: (model: string, prompt: string) => Promise<string>;
+      // Streaming methods
+      streamPrompt: (request: {
+        model: string;
+        prompt: string;
+        context: string;
+        userPrompt?: string;
+        contextData?: Record<string, unknown>;
+      }) => Promise<string>;
+      cancelStream: (streamId: string, reason?: string) => Promise<void>;
+      getStreamInfo: (streamId: string) => Promise<unknown>;
+      getActiveStreams: () => Promise<unknown[]>;
+      onStreamEvent: (callback: (event: unknown) => void) => () => void;
     };
     llm: {
       getStatus: () => Promise<{

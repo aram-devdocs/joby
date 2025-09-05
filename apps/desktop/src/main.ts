@@ -1,6 +1,13 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import Store from 'electron-store';
-import { OllamaService } from '@packages/llm';
+import {
+  OllamaService,
+  OllamaStreamManager,
+  eventBus,
+  StreamLogger,
+  type StreamRequest,
+  type StreamEvent,
+} from '@packages/llm';
 import {
   BrowserService,
   FormAnalyzer,
@@ -75,6 +82,8 @@ const store = new Store<{
 
 // Initialize services
 const ollamaService = new OllamaService();
+const ollamaStreamManager = new OllamaStreamManager();
+const streamLogger = new StreamLogger();
 const browserService = new BrowserService();
 const formAnalyzer = new FormAnalyzer();
 const formInteractionService = new FormInteractionService();
@@ -99,6 +108,7 @@ const savedOllamaHost = (
 ).host;
 if (savedOllamaHost) {
   ollamaService.updateHost(savedOllamaHost);
+  ollamaStreamManager.updateHost(savedOllamaHost);
 }
 
 // Auto-connect to Ollama on startup with retry logic
@@ -143,6 +153,17 @@ const connectToOllama = async () => {
   return false;
 };
 
+// Set up event bus for streaming
+eventBus.subscribe((event: StreamEvent) => {
+  // Log all stream events
+  streamLogger.logEvent(event);
+
+  // Forward stream events to renderer
+  if (mainWindow) {
+    mainWindow.webContents.send('ollama:streamEvent', event);
+  }
+});
+
 // Start auto-connect after app is ready
 app.whenReady().then(() => {
   setTimeout(connectToOllama, 1000);
@@ -151,6 +172,7 @@ app.whenReady().then(() => {
 // IPC handlers for Ollama
 ipcMain.handle('ollama:setHost', async (_event, host: string) => {
   ollamaService.updateHost(host);
+  ollamaStreamManager.updateHost(host);
   (store as unknown as StoreType).set('ollama', { host });
   return { success: true };
 });
@@ -184,6 +206,54 @@ ipcMain.handle(
     return response.response;
   },
 );
+
+// Streaming IPC handlers
+ipcMain.handle(
+  'ollama:streamPrompt',
+  async (
+    _event,
+    request: {
+      model: string;
+      prompt: string;
+      context: string;
+      userPrompt?: string;
+      contextData?: Record<string, unknown>;
+    },
+  ) => {
+    const streamRequest: StreamRequest = {
+      model: request.model,
+      prompt: request.prompt,
+      context: request.context as
+        | 'form-analysis'
+        | 'user-chat'
+        | 'settings-test'
+        | 'debug-manual',
+      ...(request.userPrompt && { userPrompt: request.userPrompt }),
+      ...(request.contextData && { contextData: request.contextData }),
+    };
+
+    const streamId = await ollamaStreamManager.startStream(streamRequest);
+    return streamId;
+  },
+);
+
+ipcMain.handle(
+  'ollama:cancelStream',
+  async (_event, streamId: string, reason?: string) => {
+    const cancelled = await ollamaStreamManager.cancelStream(streamId, reason);
+    return { cancelled };
+  },
+);
+
+ipcMain.handle('ollama:getStreamInfo', async (_event, streamId: string) => {
+  const info = ollamaStreamManager.getStreamInfo(streamId);
+  return info;
+});
+
+ipcMain.handle('ollama:getActiveStreams', async () => {
+  const streams = ollamaStreamManager.getActiveStreams();
+  return streams;
+});
 
 // IPC handlers for Browser service
 ipcMain.handle('browser:getCurrentUrl', () => {

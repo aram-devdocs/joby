@@ -2,3 +2,7 @@ export * from './HelloWorld';
 export * from './OllamaChat';
 export * from './FormFieldEditor';
 export * from './FormFieldList';
+export * from './TabSystem';
+export * from './StreamViewer';
+export * from './FilterControls';
+export * from './StreamHeader';

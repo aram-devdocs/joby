@@ -15,6 +15,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendPrompt: (model: string, prompt: string) =>
       ipcRenderer.invoke('ollama:sendPrompt', model, prompt),
     testConnection: () => ipcRenderer.invoke('ollama:testConnection'),
+    // Streaming methods
+    streamPrompt: (request: {
+      model: string;
+      prompt: string;
+      context: string;
+      userPrompt?: string;
+      contextData?: Record<string, unknown>;
+    }) => ipcRenderer.invoke('ollama:streamPrompt', request),
+    cancelStream: (streamId: string, reason?: string) =>
+      ipcRenderer.invoke('ollama:cancelStream', streamId, reason),
+    getStreamInfo: (streamId: string) =>
+      ipcRenderer.invoke('ollama:getStreamInfo', streamId),
+    getActiveStreams: () => ipcRenderer.invoke('ollama:getActiveStreams'),
+    // Event listeners
+    onStreamEvent: (callback: (event: unknown) => void) => {
+      ipcRenderer.on('ollama:streamEvent', (_event, data) => callback(data));
+      return () => ipcRenderer.removeAllListeners('ollama:streamEvent');
+    },
   },
   llm: {
     getStatus: () => ipcRenderer.invoke('llm:getStatus'),

@@ -9,6 +9,8 @@ export { InteractiveFormPanel } from './organisms/InteractiveFormPanel';
 export { SplitPanel } from './organisms/layout/SplitPanel';
 export { Sidebar } from './organisms/layout/Sidebar';
 export type { SidebarItem } from './organisms/layout/Sidebar';
+export { TerminalContainer } from './organisms/TerminalContainer';
+export { StreamPanel } from './organisms/StreamPanel';
 
 // Templates - Page layouts
 export { DashboardTemplate } from './templates/DashboardTemplate';
@@ -32,6 +34,7 @@ export * from './hooks';
 
 // Types
 export * from './types/form';
+export * from './types/terminal';
 
 // Utils
 export { cn } from './lib/utils';
