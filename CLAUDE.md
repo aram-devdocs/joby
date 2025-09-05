@@ -2,23 +2,49 @@
 
 AI guidance for Claude Code. Optimize for minimal token usage.
 
-## CRITICAL: ORCHESTRATOR FIRST
+## COORDINATION AND WORKFLOW
 
-**ALWAYS use orchestrator agent. NEVER work directly.**
+**You are the coordinator.** Analyze requirements, delegate to specialists,
+track progress.
 
 ```
-User request → Task(orchestrator) → Orchestrator plans → Specialists execute
+User request → Claude analyzes → Claude delegates to specialists → Claude coordinates results
 ```
+
+### Task Analysis Framework
+
+- Parse requirements to identify core objectives and technical domains
+- Decompose complex work into manageable, delegatable subtasks
+- Identify parallel vs sequential execution opportunities
+- Determine quality requirements and validation needs
+
+### Specialist Agent Delegation
+
+Use TodoWrite extensively for task tracking. Delegate to appropriate
+specialists:
+
+**Complex Features:** fullstack-engineer (multi-layer functionality) **UI/UX
+Focus:** frontend-specialist (React, components, accessibility)  
+**Server-side:** backend-specialist (APIs, databases, architecture) **System
+Design:** system-architect (architectural decisions, patterns) **Quality
+Assurance:** test-engineer (after implementation) → code-reviewer (before
+completion)
+
+### Parallel Execution Strategy
+
+- Run independent tasks simultaneously for efficiency
+- Frontend and backend work can often proceed in parallel
+- Documentation and testing alongside implementation
+- Respect critical dependencies (design → implementation → review)
 
 ## AGENTS (.claude/agents/\*.md)
 
-**Primary:** orchestrator (MANDATORY first step) **Specialists:**
-fullstack-engineer, frontend-specialist, backend-specialist, architect,
-test-engineer, code-reviewer
+**Specialists:** fullstack-engineer, frontend-specialist, backend-specialist,
+system-architect, test-engineer, code-reviewer
 
 ## RULES
 
-1. orchestrator first (always)
+1. Use specialist agents for implementation work
 2. pnpm lint/typecheck/test/build before commits
 3. NO: any types, --no-verify, console.log
 4. Pre-commit hooks mandatory
