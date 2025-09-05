@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@packages/shared": "workspace:*",
     "ollama": "^0.5.11"
   },
   "devDependencies": {

@@ -1,3 +1,31 @@
+// LLM status tracking
+export type LLMStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'processing'
+  | 'error';
+
+// Enhancement details for transparency
+export interface EnhancementDetails {
+  prompt: string;
+  response: string;
+  timestamp: number;
+  duration?: number;
+  model?: string;
+  error?: string;
+}
+
+export interface LLMConnectionStatus {
+  status: LLMStatus;
+  message?: string;
+  lastError?: string;
+  connectedAt?: number;
+  disconnectedAt?: number;
+  retryCount?: number;
+  nextRetryAt?: number;
+}
+
 export interface FormField {
   id?: string;
   name?: string;
@@ -11,6 +39,7 @@ export interface FormField {
   xpath?: string;
   position?: { x: number; y: number; width: number; height: number };
   attributes?: Record<string, string>;
+  enhancementDetails?: EnhancementDetails;
 }
 
 export interface TypingOptions {
@@ -30,8 +59,16 @@ export interface ElectronAPI {
   };
   ollama: {
     setHost: (host: string) => Promise<{ success: boolean }>;
+    getHost: () => Promise<string>;
     getModels: () => Promise<Array<{ name: string; modified_at: string }>>;
     sendPrompt: (model: string, prompt: string) => Promise<string>;
+    testConnection: () => Promise<{
+      connected: boolean;
+      models?: Array<string | { name: string; [key: string]: unknown }>;
+    }>;
+    getStatus: () => Promise<LLMConnectionStatus>;
+    connect: () => Promise<{ success: boolean; status: LLMStatus }>;
+    disconnect: () => Promise<{ success: boolean }>;
   };
   browser: {
     getCurrentUrl: () => Promise<string | undefined>;
@@ -45,6 +82,14 @@ export interface ElectronAPI {
       }>;
       summary: string;
     }>;
+    getEnhancementConfig: () => Promise<{
+      enableCache: boolean;
+      selectedModel?: string;
+    }>;
+    updateEnhancementConfig: (config: {
+      enableCache: boolean;
+      selectedModel?: string;
+    }) => Promise<{ success: boolean; config: unknown }>;
     onNavigationStart: (url: string) => void;
     onNavigationComplete: (url: string, title?: string) => void;
   };

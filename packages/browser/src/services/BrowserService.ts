@@ -76,6 +76,36 @@ export interface FormField {
   multiple?: boolean;
   checked?: boolean;
   autocomplete?: string;
+  // Field enhancement data from intelligent detection
+  enhancement?: {
+    fieldType?: string;
+    label?: string;
+    validation?: {
+      pattern?: string;
+      minLength?: number;
+      maxLength?: number;
+      min?: string | number;
+      max?: string | number;
+      required?: boolean;
+      message?: string;
+    };
+    confidence: number;
+    source: 'static' | 'llm' | 'cache' | 'hybrid';
+  };
+  validationRules?: Array<{
+    type:
+      | 'pattern'
+      | 'minLength'
+      | 'maxLength'
+      | 'min'
+      | 'max'
+      | 'required'
+      | 'email'
+      | 'tel'
+      | 'url';
+    value?: string | number | boolean;
+    message?: string;
+  }>;
 }
 
 export class BrowserService extends EventEmitter {

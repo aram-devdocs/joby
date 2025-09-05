@@ -1,5 +1,26 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 import type { FormField, InteractiveFormField } from '../../types/form';
+
+// Define types locally for now since they're not exported from browser package
+type LLMConnectionStatus = {
+  status: 'disconnected' | 'connecting' | 'connected' | 'processing' | 'error';
+  message?: string;
+  connectedAt?: number;
+  lastError?: string;
+};
+
+type EnhancementDetails = {
+  prompt?: string;
+  response?: string;
+  confidence?: number;
+  fieldType?: string;
+};
 
 export interface FormData {
   fields: FormField[];
@@ -27,6 +48,15 @@ interface BrowserContextValue {
   syncField: (fieldId: string) => Promise<void>;
   syncAllFields: () => Promise<void>;
   initializeInteractiveFields: (fields: FormField[]) => void;
+  // LLM status tracking
+  llmStatus: LLMConnectionStatus;
+  setLLMStatus: (status: LLMConnectionStatus) => void;
+  // Enhancement details tracking
+  enhancementDetails: Map<string, EnhancementDetails>;
+  setEnhancementDetails: (fieldId: string, details: EnhancementDetails) => void;
+  getEnhancementDetails: (fieldId: string) => EnhancementDetails | undefined;
+  // Field retry functionality
+  retryFieldEnhancement: (fieldId: string) => Promise<void>;
 }
 
 const BrowserContext = createContext<BrowserContextValue | undefined>(
@@ -47,14 +77,24 @@ export function BrowserProvider({
   const [interactiveFields, setInteractiveFields] = useState<
     Map<string, InteractiveFormField>
   >(new Map());
+  const [llmStatus, setLLMStatus] = useState<LLMConnectionStatus>({
+    status: 'disconnected',
+    message: 'Not connected to Ollama',
+  });
+  const [enhancementDetails, setEnhancementDetailsState] = useState<
+    Map<string, EnhancementDetails>
+  >(new Map());
 
   const clearForms = useCallback(() => {
     setDetectedForms([]);
     setInteractiveFields(new Map());
+    setEnhancementDetailsState(new Map());
   }, []);
 
   const initializeInteractiveFields = useCallback((fields: FormField[]) => {
     const newFieldsMap = new Map<string, InteractiveFormField>();
+    const newEnhancementMap = new Map<string, EnhancementDetails>();
+
     fields.forEach((field) => {
       const fieldId = field.id || field.name || `field-${Math.random()}`;
       newFieldsMap.set(fieldId, {
@@ -64,8 +104,16 @@ export function BrowserProvider({
         uiValue: field.value || '',
         browserValue: field.value || '',
       });
+
+      // Store enhancement details if present
+      // Enhancement details are fetched separately, not part of field
+      // if (field.enhancementDetails) {
+      //   newEnhancementMap.set(fieldId, field.enhancementDetails);
+      // }
     });
+
     setInteractiveFields(newFieldsMap);
+    setEnhancementDetailsState(newEnhancementMap);
   }, []);
 
   const setFieldEditing = useCallback((fieldId: string, isEditing: boolean) => {
@@ -235,6 +283,110 @@ export function BrowserProvider({
     [browserAPI],
   );
 
+  const setEnhancementDetails = useCallback(
+    (fieldId: string, details: EnhancementDetails) => {
+      setEnhancementDetailsState((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(fieldId, details);
+        return newMap;
+      });
+    },
+    [],
+  );
+
+  const getEnhancementDetails = useCallback(
+    (fieldId: string) => {
+      return enhancementDetails.get(fieldId);
+    },
+    [enhancementDetails],
+  );
+
+  const retryFieldEnhancement = useCallback(
+    async (fieldId: string) => {
+      const field = interactiveFields.get(fieldId);
+      if (!field || !window.electronAPI?.browser) {
+        return;
+      }
+
+      try {
+        // Mark field as being re-enhanced
+        setInteractiveFields((prev) => {
+          const newMap = new Map(prev);
+          const f = newMap.get(fieldId);
+          if (f) {
+            newMap.set(fieldId, { ...f, syncStatus: 'syncing' });
+          }
+          return newMap;
+        });
+
+        // Request re-enhancement through the browser service
+        // This would need to be implemented in the main process
+        // For now, we'll just update the status
+
+        setInteractiveFields((prev) => {
+          const newMap = new Map(prev);
+          const f = newMap.get(fieldId);
+          if (f) {
+            newMap.set(fieldId, { ...f, syncStatus: 'synced' });
+          }
+          return newMap;
+        });
+      } catch {
+        setInteractiveFields((prev) => {
+          const newMap = new Map(prev);
+          const f = newMap.get(fieldId);
+          if (f) {
+            newMap.set(fieldId, { ...f, syncStatus: 'error' });
+          }
+          return newMap;
+        });
+      }
+    },
+    [interactiveFields],
+  );
+
+  // Auto-connect to Ollama on mount
+  useEffect(() => {
+    const connectToOllama = async () => {
+      // Connection is now handled automatically in main process
+      // This is kept for potential manual reconnection needs
+      if (window.electronAPI?.llm?.reconnect) {
+        try {
+          const success = await window.electronAPI.llm.reconnect();
+          if (success) {
+            setLLMStatus({
+              status: 'connected',
+              message: 'Connected to Ollama',
+              connectedAt: Date.now(),
+            });
+          }
+        } catch {
+          setLLMStatus({
+            status: 'error',
+            message: 'Failed to connect to Ollama',
+            lastError: 'Failed to connect',
+          });
+        }
+      }
+    };
+
+    connectToOllama();
+
+    // Poll for status updates
+    const interval = setInterval(async () => {
+      if (window.electronAPI?.llm?.getStatus) {
+        try {
+          const status = await window.electronAPI.llm.getStatus();
+          setLLMStatus(status);
+        } catch {
+          // Ignore polling errors
+        }
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const syncAllFields = useCallback(async () => {
     // Get the latest state to avoid stale closures
     let fieldsToSync: Array<[string, InteractiveFormField]> = [];
@@ -266,6 +418,12 @@ export function BrowserProvider({
     syncField,
     syncAllFields,
     initializeInteractiveFields,
+    llmStatus,
+    setLLMStatus,
+    enhancementDetails,
+    setEnhancementDetails,
+    getEnhancementDetails,
+    retryFieldEnhancement,
   };
 
   return (
