@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import Store from 'electron-store';
 import { OllamaService } from '@packages/llm';
 import {
   BrowserService,
@@ -51,21 +52,85 @@ app.on('activate', () => {
   }
 });
 
+// Initialize persistent store
+const store = new Store<{
+  enhancement: {
+    enableStatic: boolean;
+    enableLLM: boolean;
+    enableCache: boolean;
+    selectedModel: string;
+  };
+  ollama: {
+    host: string;
+  };
+}>({
+  defaults: {
+    enhancement: {
+      enableStatic: true,
+      enableLLM: false,
+      enableCache: true,
+      selectedModel: 'llama3.2',
+    },
+    ollama: {
+      host: 'http://localhost:11434',
+    },
+  },
+});
+
 // Initialize services
 const ollamaService = new OllamaService();
 const browserService = new BrowserService();
 const formAnalyzer = new FormAnalyzer();
 const formInteractionService = new FormInteractionService();
 
+// Load saved settings
+interface StoreType {
+  get(key: string): unknown;
+  set(key: string, value: unknown): void;
+}
+const savedConfig = (store as unknown as StoreType).get('enhancement') as {
+  enableLLM: boolean;
+  selectedModel?: string;
+};
+formAnalyzer.setLLMEnabled(savedConfig.enableLLM);
+if (savedConfig.selectedModel) {
+  // Store the selected model for later use
+}
+
+const savedOllamaHost = (
+  (store as unknown as StoreType).get('ollama') as { host: string }
+).host;
+if (savedOllamaHost) {
+  ollamaService.updateHost(savedOllamaHost);
+}
+
 // IPC handlers for Ollama
 ipcMain.handle('ollama:setHost', async (_event, host: string) => {
   ollamaService.updateHost(host);
+  (store as unknown as StoreType).set('ollama', { host });
   return { success: true };
+});
+
+ipcMain.handle('ollama:getHost', () => {
+  return ((store as unknown as StoreType).get('ollama') as { host: string })
+    .host;
 });
 
 ipcMain.handle('ollama:getModels', async () => {
   const models = await ollamaService.listModels();
   return models;
+});
+
+ipcMain.handle('ollama:testConnection', async () => {
+  try {
+    const models = await ollamaService.listModels();
+    return { connected: true, models };
+  } catch (error) {
+    return {
+      connected: false,
+      error: error instanceof Error ? error.message : 'Connection failed',
+    };
+  }
 });
 
 ipcMain.handle(
@@ -89,11 +154,52 @@ ipcMain.handle('browser:detectJobSite', (_event, url: string) => {
   return browserService.detectJobSite(url);
 });
 
-ipcMain.handle('browser:analyzeHTML', (_event, html: string) => {
-  const forms = formAnalyzer.analyzeHTML(html);
-  const summary = formAnalyzer.generateFormSummary(forms);
-  return { forms, summary };
+ipcMain.handle(
+  'browser:analyzeHTML',
+  async (_event, html: string, pageUrl?: string, pageTitle?: string) => {
+    // Use enhanced analyzer for intelligent field detection
+    const forms = await formAnalyzer.analyzeHTML(html, pageTitle, pageUrl);
+    const summary = formAnalyzer.generateFormSummary(forms);
+    return { forms, summary };
+  },
+);
+
+// Configuration handlers for field enhancement
+ipcMain.handle('browser:setLLMEnabled', (_event, enabled: boolean) => {
+  formAnalyzer.setLLMEnabled(enabled);
+  return { success: true, llmEnabled: enabled };
 });
+
+ipcMain.handle('browser:getEnhancementConfig', () => {
+  const config = (store as unknown as StoreType).get('enhancement');
+  return config;
+});
+
+ipcMain.handle(
+  'browser:updateEnhancementConfig',
+  (
+    _event,
+    config: {
+      enableStatic: boolean;
+      enableLLM: boolean;
+      enableCache: boolean;
+      selectedModel?: string;
+    },
+  ) => {
+    // Update the form analyzer configuration
+    formAnalyzer.setLLMEnabled(config.enableLLM);
+
+    // Save to persistent storage
+    (store as unknown as StoreType).set('enhancement', {
+      enableStatic: config.enableStatic,
+      enableLLM: config.enableLLM,
+      enableCache: config.enableCache,
+      selectedModel: config.selectedModel || 'llama3.2',
+    });
+
+    return { success: true, config };
+  },
+);
 
 ipcMain.on('browser:navigationStart', (_event, url: string) => {
   browserService.onNavigationStart(url);

@@ -10,17 +10,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   ollama: {
     setHost: (host: string) => ipcRenderer.invoke('ollama:setHost', host),
+    getHost: () => ipcRenderer.invoke('ollama:getHost'),
     getModels: () => ipcRenderer.invoke('ollama:getModels'),
     sendPrompt: (model: string, prompt: string) =>
       ipcRenderer.invoke('ollama:sendPrompt', model, prompt),
+    testConnection: () => ipcRenderer.invoke('ollama:testConnection'),
   },
   browser: {
     getCurrentUrl: () => ipcRenderer.invoke('browser:getCurrentUrl'),
     getHistory: () => ipcRenderer.invoke('browser:getHistory'),
     detectJobSite: (url: string) =>
       ipcRenderer.invoke('browser:detectJobSite', url),
-    analyzeHTML: (html: string) =>
-      ipcRenderer.invoke('browser:analyzeHTML', html),
+    analyzeHTML: (html: string, pageUrl?: string, pageTitle?: string) =>
+      ipcRenderer.invoke('browser:analyzeHTML', html, pageUrl, pageTitle),
+    setLLMEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke('browser:setLLMEnabled', enabled),
+    getEnhancementConfig: () =>
+      ipcRenderer.invoke('browser:getEnhancementConfig'),
+    updateEnhancementConfig: (config: {
+      enableStatic: boolean;
+      enableLLM: boolean;
+      enableCache: boolean;
+      selectedModel?: string;
+    }) => ipcRenderer.invoke('browser:updateEnhancementConfig', config),
     onNavigationStart: (url: string) =>
       ipcRenderer.send('browser:navigationStart', url),
     onNavigationComplete: (url: string, title?: string) =>

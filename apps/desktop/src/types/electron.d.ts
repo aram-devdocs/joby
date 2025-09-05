@@ -30,8 +30,13 @@ export interface ElectronAPI {
   };
   ollama: {
     setHost: (host: string) => Promise<{ success: boolean }>;
+    getHost: () => Promise<string>;
     getModels: () => Promise<Array<{ name: string; modified_at: string }>>;
     sendPrompt: (model: string, prompt: string) => Promise<string>;
+    testConnection: () => Promise<{
+      connected: boolean;
+      models?: Array<string | { name: string; [key: string]: unknown }>;
+    }>;
   };
   browser: {
     getCurrentUrl: () => Promise<string | undefined>;
@@ -45,6 +50,21 @@ export interface ElectronAPI {
       }>;
       summary: string;
     }>;
+    setLLMEnabled: (
+      enabled: boolean,
+    ) => Promise<{ success: boolean; llmEnabled: boolean }>;
+    getEnhancementConfig: () => Promise<{
+      enableStatic: boolean;
+      enableLLM: boolean;
+      enableCache: boolean;
+      selectedModel?: string;
+    }>;
+    updateEnhancementConfig: (config: {
+      enableStatic: boolean;
+      enableLLM: boolean;
+      enableCache: boolean;
+      selectedModel?: string;
+    }) => Promise<{ success: boolean; config: unknown }>;
     onNavigationStart: (url: string) => void;
     onNavigationComplete: (url: string, title?: string) => void;
   };

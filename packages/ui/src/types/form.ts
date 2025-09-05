@@ -37,7 +37,10 @@ export interface FormField {
     | 'textarea'
     | 'range'
     | 'color'
-    | 'search';
+    | 'search'
+    | 'phone'
+    | 'postal'
+    | 'creditcard';
   label?: string;
   placeholder?: string;
   required: boolean;
@@ -58,6 +61,21 @@ export interface FormField {
   multiple?: boolean; // For select elements with multiple attribute
   checked?: boolean; // For checkboxes and radio buttons
   autocomplete?: string; // HTML5 autocomplete attribute
+  enhancement?: {
+    fieldType?: string;
+    label?: string;
+    validation?: {
+      pattern?: string;
+      minLength?: number;
+      maxLength?: number;
+      min?: string | number;
+      max?: string | number;
+      required?: boolean;
+      message?: string;
+    };
+    confidence: number;
+    source: 'static' | 'llm' | 'cache' | 'hybrid';
+  };
 }
 
 export interface InteractiveFormField extends FormField {

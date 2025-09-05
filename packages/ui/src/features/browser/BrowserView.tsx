@@ -75,81 +75,134 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       setIsLoading(false);
     };
 
-    const handleDOMReady = () => {
+    const handleDOMReady = async () => {
       setIsLoading(false);
 
-      // Inject enhanced form detection script
-      webview
-        .executeJavaScript<Form[]>(
-          `
-        (function() {
-          const forms = [];
-          
-          // Helper to generate CSS selector for an element
-          function getSelector(element) {
-            if (element.id) {
-              return '#' + CSS.escape(element.id);
-            }
-            if (element.name) {
-              return element.tagName.toLowerCase() + '[name="' + CSS.escape(element.name) + '"]';
-            }
-            // Fallback to tag and index
-            const parent = element.parentElement;
-            const siblings = Array.from(parent.children).filter(el => el.tagName === element.tagName);
-            const index = siblings.indexOf(element);
-            return element.tagName.toLowerCase() + ':nth-of-type(' + (index + 1) + ')';
-          }
-          
-          document.querySelectorAll('form').forEach(form => {
-            const fields = [];
-            form.querySelectorAll('input, select, textarea').forEach(field => {
-              if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
-                fields.push({
-                  name: field.name || '',
-                  type: field.type || field.tagName.toLowerCase(),
-                  id: field.id || '',
-                  placeholder: field.placeholder || '',
-                  required: field.required || false,
-                  value: field.value || '',
-                  selector: getSelector(field)
-                });
-              }
-            });
-            if (fields.length > 0) {
-              forms.push({ fields });
-            }
-          });
-          
-          // Also check for fields outside forms (common in SPAs)
-          const orphanFields = [];
-          document.querySelectorAll('input, select, textarea').forEach(field => {
-            const inForm = field.closest('form');
-            if (!inForm && field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
-              orphanFields.push({
+      // Use the enhanced form analyzer from main process instead of client-side script
+      try {
+        const html = await webview.executeJavaScript<string>(
+          'document.documentElement.outerHTML',
+        );
+        const pageTitle =
+          await webview.executeJavaScript<string>('document.title');
+        const url = webview.getURL();
+
+        // Use IPC to analyze HTML with enhancement service
+        if (window.electronAPI?.browser?.analyzeHTML) {
+          const { forms } = await window.electronAPI.browser.analyzeHTML(
+            html,
+            url,
+            pageTitle,
+          );
+
+          if (forms.length > 0 && onFormDetected) {
+            // Pass through all FormField data including enhancement information
+            const convertedForms = forms.map((formInfo) => ({
+              fields: formInfo.fields.map((field) => ({
                 name: field.name || '',
-                type: field.type || field.tagName.toLowerCase(),
+                type: field.type || 'text',
                 id: field.id || '',
                 placeholder: field.placeholder || '',
                 required: field.required || false,
                 value: field.value || '',
-                selector: getSelector(field)
-              });
-            }
-          });
-          
-          if (orphanFields.length > 0) {
-            forms.push({ fields: orphanFields });
+                selector: field.selector || '',
+                // Pass through all enhanced form field properties
+                inputType: field.inputType,
+                label: field.label,
+                options: field.options,
+                xpath: field.xpath,
+                position: field.position,
+                attributes: field.attributes,
+                section: field.section,
+                validationRules: field.validationRules,
+                pattern: field.pattern,
+                minLength: field.minLength,
+                maxLength: field.maxLength,
+                min: field.min,
+                max: field.max,
+                step: field.step,
+                multiple: field.multiple,
+                checked: field.checked,
+                autocomplete: field.autocomplete,
+                enhancement: field.enhancement, // This is the key enhancement data!
+              })),
+            }));
+            onFormDetected(convertedForms);
           }
-          
-          return forms;
-        })()
-      `,
-        )
-        .then((forms) => {
+        } else {
+          // Fallback to basic form detection if IPC not available
+          const forms = await webview.executeJavaScript<Form[]>(`
+            (function() {
+              const forms = [];
+              
+              // Helper to generate CSS selector for an element
+              function getSelector(element) {
+                if (element.id) {
+                  return '#' + CSS.escape(element.id);
+                }
+                if (element.name) {
+                  return element.tagName.toLowerCase() + '[name="' + CSS.escape(element.name) + '"]';
+                }
+                // Fallback to tag and index
+                const parent = element.parentElement;
+                const siblings = Array.from(parent.children).filter(el => el.tagName === element.tagName);
+                const index = siblings.indexOf(element);
+                return element.tagName.toLowerCase() + ':nth-of-type(' + (index + 1) + ')';
+              }
+              
+              document.querySelectorAll('form').forEach(form => {
+                const fields = [];
+                form.querySelectorAll('input, select, textarea').forEach(field => {
+                  if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
+                    fields.push({
+                      name: field.name || '',
+                      type: field.type || field.tagName.toLowerCase(),
+                      id: field.id || '',
+                      placeholder: field.placeholder || '',
+                      required: field.required || false,
+                      value: field.value || '',
+                      selector: getSelector(field)
+                    });
+                  }
+                });
+                if (fields.length > 0) {
+                  forms.push({ fields });
+                }
+              });
+              
+              // Also check for fields outside forms (common in SPAs)
+              const orphanFields = [];
+              document.querySelectorAll('input, select, textarea').forEach(field => {
+                const inForm = field.closest('form');
+                if (!inForm && field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
+                  orphanFields.push({
+                    name: field.name || '',
+                    type: field.type || field.tagName.toLowerCase(),
+                    id: field.id || '',
+                    placeholder: field.placeholder || '',
+                    required: field.required || false,
+                    value: field.value || '',
+                    selector: getSelector(field)
+                  });
+                }
+              });
+              
+              if (orphanFields.length > 0) {
+                forms.push({ fields: orphanFields });
+              }
+              
+              return forms;
+            })()
+          `);
+
           if (forms.length > 0 && onFormDetected) {
             onFormDetected(forms);
           }
-        });
+        }
+      } catch (error) {
+        console.error('Error analyzing forms:', error);
+        // If analysis fails, still continue normal page load
+      }
     };
 
     const handleLoadStart = () => {
@@ -328,7 +381,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           }}
           partition="persist:joby"
           webpreferences="contextIsolation=yes,nodeIntegration=no"
-          allowpopups
+          allowpopups={true}
         />
       </div>
     </div>

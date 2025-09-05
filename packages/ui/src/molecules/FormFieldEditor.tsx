@@ -37,6 +37,8 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
   }, [fieldId, onSync]);
 
   const getFieldLabel = () => {
+    // Prioritize enhanced label if available
+    if (field.enhancement?.label) return field.enhancement.label;
     if (field.label) return field.label;
     if (field.placeholder) return field.placeholder;
     if (field.name) return field.name;
@@ -59,10 +61,38 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             {field.required && <span className="ml-1 text-red-500">*</span>}
           </label>
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            {field.type && <span>Type: {field.type}</span>}
+            {/* Show enhanced field type or inputType, fallback to HTML type */}
+            {(field.enhancement?.fieldType ||
+              field.inputType ||
+              field.type) && (
+              <span>
+                Type:{' '}
+                {field.enhancement?.fieldType || field.inputType || field.type}
+              </span>
+            )}
+            {/* Show confidence indicator for enhanced fields */}
+            {field.enhancement && (
+              <>
+                <span>•</span>
+                <span
+                  className={`font-medium ${
+                    field.enhancement.confidence >= 0.8
+                      ? 'text-green-600'
+                      : field.enhancement.confidence >= 0.5
+                        ? 'text-yellow-600'
+                        : 'text-red-600'
+                  }`}
+                >
+                  {Math.round(field.enhancement.confidence * 100)}% confidence
+                </span>
+                <span className="text-gray-400">
+                  ({field.enhancement.source})
+                </span>
+              </>
+            )}
             {field.name && (
               <>
-                {field.type && <span>•</span>}
+                <span>•</span>
                 <span className="truncate">Name: {field.name}</span>
               </>
             )}

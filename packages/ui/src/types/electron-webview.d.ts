@@ -13,7 +13,7 @@ export interface WebviewHTMLAttributes
   extends React.HTMLAttributes<WebviewElement> {
   src?: string;
   partition?: string;
-  allowpopups?: string;
+  allowpopups?: boolean | string;
   webpreferences?: string;
   httpreferrer?: string;
   useragent?: string;

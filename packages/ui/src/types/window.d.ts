@@ -20,11 +20,24 @@ declare global {
           Array<{ url: string; title: string; timestamp: number }>
         >;
         detectJobSite: (url: string) => Promise<string | null>;
-        analyzeHTML: (html: string) => Promise<{
+        analyzeHTML: (
+          html: string,
+          pageUrl?: string,
+          pageTitle?: string,
+        ) => Promise<{
           forms: Array<{
             fields: FormField[];
           }>;
           summary: string;
+        }>;
+        setLLMEnabled: (enabled: boolean) => Promise<{
+          success: boolean;
+          llmEnabled: boolean;
+        }>;
+        getEnhancementConfig: () => Promise<{
+          enableStatic?: boolean;
+          enableLLM?: boolean;
+          enableCache?: boolean;
         }>;
         onNavigationStart: (url: string) => void;
         onNavigationComplete: (url: string, title?: string) => void;

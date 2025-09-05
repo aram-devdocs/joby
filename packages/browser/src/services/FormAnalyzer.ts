@@ -1,9 +1,108 @@
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import { FormInfo, FormField, FormSelectOption } from './BrowserService';
+import { FieldEnhancementService } from './field-enhancement';
+import type { FieldContext } from './field-enhancement';
+
+// CSS.escape polyfill for Node.js environment
+function cssEscape(value: string): string {
+  if (typeof value !== 'string') {
+    throw new TypeError('CSS.escape requires a string argument');
+  }
+
+  const string = value;
+  const length = string.length;
+  let index = -1;
+  let codeUnit: number;
+  let result = '';
+
+  const firstCodeUnit = string.charCodeAt(0);
+
+  while (++index < length) {
+    codeUnit = string.charCodeAt(index);
+
+    // Note: there's no need to special-case astral symbols, surrogate
+    // pairs, or lone surrogates.
+
+    // If the character is NULL (U+0000), then the REPLACEMENT CHARACTER
+    // (U+FFFD).
+    if (codeUnit === 0x0000) {
+      result += '\uFFFD';
+      continue;
+    }
+
+    if (
+      // If the character is in the range [\1-\1F] (U+0001 to U+001F) or is
+      // U+007F, […]
+      (codeUnit >= 0x0001 && codeUnit <= 0x001f) ||
+      codeUnit === 0x007f ||
+      // If the character is the first character and is in the range [0-9]
+      // (U+0030 to U+0039), […]
+      (index === 0 && codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
+      // If the character is the second character and is in the range [0-9]
+      // (U+0030 to U+0039) and the first character is a `-` (U+002D), […]
+      (index === 1 &&
+        codeUnit >= 0x0030 &&
+        codeUnit <= 0x0039 &&
+        firstCodeUnit === 0x002d)
+    ) {
+      // https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
+      result += '\\' + codeUnit.toString(16) + ' ';
+      continue;
+    }
+
+    if (
+      // If the character is the first character and is a `-` (U+002D), and
+      // there is no second character, […]
+      index === 0 &&
+      length === 1 &&
+      codeUnit === 0x002d
+    ) {
+      result += '\\' + string.charAt(index);
+      continue;
+    }
+
+    // If the character is not handled by one of the above rules and is one
+    // of the following characters: [`!`, `"`, `#`, `$`, `%`, `&`, `'`, `(`,
+    // `)`, `*`, `+`, `,`, `-`, `.`, `/`, `:`, `;`, `<`, `=`, `>`, `?`, `@`,
+    // `[`, `\`, `]`, `^`, `` ` ``, `{`, `|`, `}`, `~`], […]
+    if (
+      codeUnit >= 0x0080 ||
+      codeUnit === 0x002d ||
+      codeUnit === 0x005f ||
+      (codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
+      (codeUnit >= 0x0041 && codeUnit <= 0x005a) ||
+      (codeUnit >= 0x0061 && codeUnit <= 0x007a)
+    ) {
+      // the character itself
+      result += string.charAt(index);
+      continue;
+    }
+
+    // Otherwise, the escaped character.
+    // https://drafts.csswg.org/cssom/#escape-a-character
+    result += '\\' + string.charAt(index);
+  }
+
+  return result;
+}
 
 export class FormAnalyzer {
-  analyzeHTML(html: string): FormInfo[] {
+  private enhancementService: FieldEnhancementService;
+
+  constructor() {
+    // Initialize with static enhancement only (LLM disabled by default)
+    this.enhancementService = FieldEnhancementService.getInstance({
+      enableStatic: true,
+      enableLLM: false,
+      enableCache: true,
+    });
+  }
+  async analyzeHTML(
+    html: string,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormInfo[]> {
     const $ = cheerio.load(html);
     const forms: FormInfo[] = [];
 
@@ -55,6 +154,16 @@ export class FormAnalyzer {
       forms.push({
         fields: orphanFields,
       });
+    }
+
+    // Apply enhancements to all fields
+    for (const form of forms) {
+      form.fields = await this.enhanceFields(
+        form.fields,
+        $,
+        pageTitle,
+        pageUrl,
+      );
     }
 
     return forms;
@@ -251,6 +360,253 @@ export class FormAnalyzer {
     return field;
   }
 
+  /**
+   * Convert FormField to FieldContext for enhancement
+   */
+  private convertToFieldContext(
+    field: FormField,
+    _$?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): FieldContext {
+    const context: FieldContext = {
+      element: {
+        ...(field.type && { type: field.type }),
+        ...(field.name && { name: field.name }),
+        ...(field.id && { id: field.id }),
+        ...(field.placeholder && { placeholder: field.placeholder }),
+        ...(field.value && { value: field.value }),
+        ...(field.label && { label: field.label }),
+        ...(field.autocomplete && { autocomplete: field.autocomplete }),
+        ...(field.pattern && { pattern: field.pattern }),
+        ...(field.required && { required: field.required }),
+        ...(field.minLength && { minLength: field.minLength }),
+        ...(field.maxLength && { maxLength: field.maxLength }),
+        ...(field.min && { min: field.min.toString() }),
+        ...(field.max && { max: field.max.toString() }),
+      },
+      ...(field.section && {
+        formContext: {
+          sectionName: field.section,
+        },
+      }),
+      ...(pageTitle || pageUrl
+        ? {
+            pageContext: {
+              ...(pageTitle && { pageTitle }),
+              ...(pageUrl && { pageUrl }),
+            },
+          }
+        : {}),
+    };
+
+    // Add aria labels from attributes if available
+    if (field.attributes?.['aria-label']) {
+      context.element.ariaLabel = field.attributes['aria-label'];
+    }
+    if (field.attributes?.['aria-labelledby']) {
+      context.element.ariaLabelledBy = field.attributes['aria-labelledby'];
+    }
+
+    return context;
+  }
+
+  /**
+   * Enhance a single field with intelligent detection
+   */
+  async enhanceField(
+    field: FormField,
+    $?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormField> {
+    const context = this.convertToFieldContext(field, $, pageTitle, pageUrl);
+    const enhancement = await this.enhancementService.enhanceField(context);
+
+    // Merge enhancement data into field
+    if (enhancement.confidence > 0) {
+      field.enhancement = {
+        ...(enhancement.fieldType !== undefined && {
+          fieldType: enhancement.fieldType,
+        }),
+        ...(enhancement.label !== undefined && { label: enhancement.label }),
+        ...(enhancement.validation !== undefined && {
+          validation: enhancement.validation,
+        }),
+        confidence: enhancement.confidence,
+        source: enhancement.source,
+      };
+
+      // Apply enhanced data with priority
+      if (enhancement.label && !field.label) {
+        field.label = enhancement.label;
+      }
+
+      if (enhancement.fieldType) {
+        // Map enhanced field type to inputType if applicable
+        const enhancedType = enhancement.fieldType.toLowerCase();
+        const validInputTypes = [
+          'text',
+          'email',
+          'tel',
+          'url',
+          'number',
+          'date',
+          'password',
+          'select',
+          'radio',
+          'checkbox',
+          'textarea',
+          'range',
+          'color',
+          'search',
+        ] as const;
+        type ValidInputType = (typeof validInputTypes)[number];
+
+        if (validInputTypes.includes(enhancedType as ValidInputType)) {
+          field.inputType = enhancedType as ValidInputType;
+        } else if (enhancedType === 'phone') {
+          field.inputType = 'tel';
+        } else if (enhancedType === 'postal' || enhancedType === 'creditcard') {
+          field.inputType = 'text';
+        }
+      }
+
+      // Apply enhanced validation rules
+      if (enhancement.validation) {
+        if (!field.validationRules) {
+          field.validationRules = [];
+        }
+
+        if (enhancement.validation.required && !field.required) {
+          field.required = true;
+        }
+
+        if (enhancement.validation.pattern && !field.pattern) {
+          field.pattern = enhancement.validation.pattern;
+        }
+
+        if (enhancement.validation.minLength && !field.minLength) {
+          field.minLength = enhancement.validation.minLength;
+        }
+
+        if (enhancement.validation.maxLength && !field.maxLength) {
+          field.maxLength = enhancement.validation.maxLength;
+        }
+
+        if (enhancement.validation.min && !field.min) {
+          field.min = enhancement.validation.min;
+        }
+
+        if (enhancement.validation.max && !field.max) {
+          field.max = enhancement.validation.max;
+        }
+      }
+    }
+
+    return field;
+  }
+
+  /**
+   * Enhance multiple fields in batch
+   */
+  async enhanceFields(
+    fields: FormField[],
+    $?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormField[]> {
+    const contexts = fields.map((field) =>
+      this.convertToFieldContext(field, $, pageTitle, pageUrl),
+    );
+
+    const enhancements = await this.enhancementService.enhanceFields(contexts);
+
+    return fields.map((field, index) => {
+      const enhancement = enhancements[index];
+      if (enhancement && enhancement.confidence > 0) {
+        field.enhancement = {
+          ...(enhancement.fieldType !== undefined && {
+            fieldType: enhancement.fieldType,
+          }),
+          ...(enhancement.label !== undefined && { label: enhancement.label }),
+          ...(enhancement.validation !== undefined && {
+            validation: enhancement.validation,
+          }),
+          confidence: enhancement.confidence,
+          source: enhancement.source,
+        };
+
+        // Apply enhanced data as described above
+        if (enhancement.label && !field.label) {
+          field.label = enhancement.label;
+        }
+
+        if (enhancement.fieldType) {
+          const enhancedType = enhancement.fieldType.toLowerCase();
+          const validInputTypes = [
+            'text',
+            'email',
+            'tel',
+            'url',
+            'number',
+            'date',
+            'password',
+            'select',
+            'radio',
+            'checkbox',
+            'textarea',
+            'range',
+            'color',
+            'search',
+          ] as const;
+          type ValidInputType = (typeof validInputTypes)[number];
+
+          if (validInputTypes.includes(enhancedType as ValidInputType)) {
+            field.inputType = enhancedType as ValidInputType;
+          } else if (enhancedType === 'phone') {
+            field.inputType = 'tel';
+          } else if (
+            enhancedType === 'postal' ||
+            enhancedType === 'creditcard'
+          ) {
+            field.inputType = 'text';
+          }
+        }
+
+        if (enhancement.validation) {
+          if (enhancement.validation.required && !field.required) {
+            field.required = true;
+          }
+          if (enhancement.validation.pattern && !field.pattern) {
+            field.pattern = enhancement.validation.pattern;
+          }
+          if (enhancement.validation.minLength && !field.minLength) {
+            field.minLength = enhancement.validation.minLength;
+          }
+          if (enhancement.validation.maxLength && !field.maxLength) {
+            field.maxLength = enhancement.validation.maxLength;
+          }
+        }
+      }
+      return field;
+    });
+  }
+
+  /**
+   * Enable or disable LLM enhancement
+   */
+  setLLMEnabled(enabled: boolean): void {
+    this.enhancementService.enableLLM(enabled);
+  }
+
+  /**
+   * Get current enhancement configuration
+   */
+  getEnhancementConfig() {
+    return this.enhancementService.getConfig();
+  }
+
   private generateSelector(
     $field: cheerio.Cheerio<AnyNode>,
     tagName: string,
@@ -258,13 +614,13 @@ export class FormAnalyzer {
     // Priority 1: ID selector
     const id = $field.attr('id');
     if (id) {
-      return `#${CSS.escape(id)}`;
+      return `#${cssEscape(id)}`;
     }
 
     // Priority 2: Name attribute selector
     const name = $field.attr('name');
     if (name) {
-      return `${tagName}[name="${CSS.escape(name)}"]`;
+      return `${tagName}[name="${cssEscape(name)}"]`;
     }
 
     // Priority 3: Unique attribute combination
@@ -273,10 +629,10 @@ export class FormAnalyzer {
     let selector = tagName;
 
     if (type) {
-      selector += `[type="${CSS.escape(type)}"]`;
+      selector += `[type="${cssEscape(type)}"]`;
     }
     if (placeholder) {
-      selector += `[placeholder="${CSS.escape(placeholder)}"]`;
+      selector += `[placeholder="${cssEscape(placeholder)}"]`;
     }
 
     // Priority 4: Position-based selector

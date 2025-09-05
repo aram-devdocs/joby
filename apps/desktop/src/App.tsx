@@ -9,6 +9,7 @@ import {
   DashboardTemplate,
   BrowserPage,
   OllamaPage,
+  SettingsPage,
   BrowserProvider,
   BrowserAPI,
 } from '@packages/ui';
@@ -89,15 +90,6 @@ function DocumentsPage() {
   );
 }
 
-function SettingsPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <p className="text-gray-600">Configure your preferences</p>
-    </div>
-  );
-}
-
 export const App: React.FC = () => {
   // Create browser API adapter for Electron
   const browserAPI: BrowserAPI = {
@@ -120,7 +112,7 @@ export const App: React.FC = () => {
     throw new Error('Ollama API not available');
   };
 
-  const handleGetModels = async () => {
+  const handleGetModelObjects = async () => {
     if (window.electronAPI?.ollama?.getModels) {
       return window.electronAPI.ollama.getModels();
     }
@@ -130,6 +122,32 @@ export const App: React.FC = () => {
   const handleSetHost = async (host: string) => {
     if (window.electronAPI?.ollama?.setHost) {
       await window.electronAPI.ollama.setHost(host);
+    }
+  };
+
+  // Settings handlers
+  const handleTestOllamaConnection = async () => {
+    if (window.electronAPI?.ollama?.testConnection) {
+      return window.electronAPI.ollama.testConnection();
+    }
+    return { connected: false };
+  };
+
+  const handleGetEnhancementConfig = async () => {
+    if (window.electronAPI?.browser?.getEnhancementConfig) {
+      return window.electronAPI.browser.getEnhancementConfig();
+    }
+    return { enableStatic: true, enableLLM: false, enableCache: true };
+  };
+
+  const handleUpdateEnhancementConfig = async (config: {
+    enableStatic: boolean;
+    enableLLM: boolean;
+    enableCache: boolean;
+    selectedModel?: string;
+  }): Promise<void> => {
+    if (window.electronAPI?.browser?.updateEnhancementConfig) {
+      await window.electronAPI.browser.updateEnhancementConfig(config);
     }
   };
 
@@ -145,14 +163,24 @@ export const App: React.FC = () => {
               element={
                 <OllamaPage
                   onSendPrompt={handleSendPrompt}
-                  onGetModels={handleGetModels}
+                  onGetModels={handleGetModelObjects}
                   onSetHost={handleSetHost}
                 />
               }
             />
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route
+              path="/settings"
+              element={
+                <SettingsPage
+                  onSetOllamaHost={handleSetHost}
+                  onTestOllamaConnection={handleTestOllamaConnection}
+                  onGetEnhancementConfig={handleGetEnhancementConfig}
+                  onUpdateEnhancementConfig={handleUpdateEnhancementConfig}
+                />
+              }
+            />
           </Routes>
         </DashboardWrapper>
       </BrowserProvider>

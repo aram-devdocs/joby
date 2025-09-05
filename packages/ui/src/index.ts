@@ -17,6 +17,8 @@ export { DashboardTemplate } from './templates/DashboardTemplate';
 export { BrowserPage } from './pages/BrowserPage';
 export { OllamaPage } from './pages/OllamaPage';
 export type { OllamaPageProps } from './pages/OllamaPage';
+export { SettingsPage } from './pages/SettingsPage';
+export type { SettingsPageProps } from './pages/SettingsPage';
 
 // Features - Feature-specific components
 export * from './features/browser';

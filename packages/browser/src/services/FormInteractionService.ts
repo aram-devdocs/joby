@@ -1,6 +1,89 @@
 import { EventEmitter } from 'events';
 import type { FormField } from './BrowserService';
 
+// CSS.escape polyfill for Node.js environment
+function cssEscape(value: string): string {
+  if (typeof value !== 'string') {
+    throw new TypeError('CSS.escape requires a string argument');
+  }
+
+  const string = value;
+  const length = string.length;
+  let index = -1;
+  let codeUnit: number;
+  let result = '';
+
+  const firstCodeUnit = string.charCodeAt(0);
+
+  while (++index < length) {
+    codeUnit = string.charCodeAt(index);
+
+    // Note: there's no need to special-case astral symbols, surrogate
+    // pairs, or lone surrogates.
+
+    // If the character is NULL (U+0000), then the REPLACEMENT CHARACTER
+    // (U+FFFD).
+    if (codeUnit === 0x0000) {
+      result += '\uFFFD';
+      continue;
+    }
+
+    if (
+      // If the character is in the range [\1-\1F] (U+0001 to U+001F) or is
+      // U+007F, […]
+      (codeUnit >= 0x0001 && codeUnit <= 0x001f) ||
+      codeUnit === 0x007f ||
+      // If the character is the first character and is in the range [0-9]
+      // (U+0030 to U+0039), […]
+      (index === 0 && codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
+      // If the character is the second character and is in the range [0-9]
+      // (U+0030 to U+0039) and the first character is a `-` (U+002D), […]
+      (index === 1 &&
+        codeUnit >= 0x0030 &&
+        codeUnit <= 0x0039 &&
+        firstCodeUnit === 0x002d)
+    ) {
+      // https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
+      result += '\\' + codeUnit.toString(16) + ' ';
+      continue;
+    }
+
+    if (
+      // If the character is the first character and is a `-` (U+002D), and
+      // there is no second character, […]
+      index === 0 &&
+      length === 1 &&
+      codeUnit === 0x002d
+    ) {
+      result += '\\' + string.charAt(index);
+      continue;
+    }
+
+    // If the character is not handled by one of the above rules and is one
+    // of the following characters: [`!`, `"`, `#`, `$`, `%`, `&`, `'`, `(`,
+    // `)`, `*`, `+`, `,`, `-`, `.`, `/`, `:`, `;`, `<`, `=`, `>`, `?`, `@`,
+    // `[`, `\`, `]`, `^`, `` ` ``, `{`, `|`, `}`, `~`], […]
+    if (
+      codeUnit >= 0x0080 ||
+      codeUnit === 0x002d ||
+      codeUnit === 0x005f ||
+      (codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
+      (codeUnit >= 0x0041 && codeUnit <= 0x005a) ||
+      (codeUnit >= 0x0061 && codeUnit <= 0x007a)
+    ) {
+      // the character itself
+      result += string.charAt(index);
+      continue;
+    }
+
+    // Otherwise, the escaped character.
+    // https://drafts.csswg.org/cssom/#escape-a-character
+    result += '\\' + string.charAt(index);
+  }
+
+  return result;
+}
+
 export interface FieldUpdate {
   selector: string;
   value: string;
@@ -52,6 +135,7 @@ export class FormInteractionService extends EventEmitter {
         const selector = ${JSON.stringify(selector)};
         const value = ${JSON.stringify(value)};
         const options = ${JSON.stringify(opts)};
+        const fieldType = ${JSON.stringify(field.type || field.inputType)};
         
         // Find the element
         const element = document.querySelector(selector);
@@ -59,142 +143,187 @@ export class FormInteractionService extends EventEmitter {
           throw new Error('Field not found: ' + selector);
         }
         
-        // Helper to dispatch realistic events
-        function dispatchEvent(el, eventType, options = {}) {
+        // Helper to dispatch events with React compatibility
+        function dispatchReactEvent(el, eventType, extraProps = {}) {
           const event = new Event(eventType, {
-            bubbles: true,
-            cancelable: true,
-            ...options
-          });
-          el.dispatchEvent(event);
-        }
-        
-        // Helper to dispatch keyboard events
-        function dispatchKeyEvent(el, eventType, key) {
-          const event = new KeyboardEvent(eventType, {
-            key: key,
-            code: 'Key' + key.toUpperCase(),
-            keyCode: key.charCodeAt(0),
             bubbles: true,
             cancelable: true
           });
+          
+          // Add React-compatible properties
+          Object.defineProperty(event, 'target', {
+            value: el,
+            enumerable: true
+          });
+          Object.defineProperty(event, 'currentTarget', {
+            value: el,
+            enumerable: true
+          });
+          
+          // Add extra properties
+          Object.keys(extraProps).forEach(key => {
+            Object.defineProperty(event, key, {
+              value: extraProps[key],
+              enumerable: true
+            });
+          });
+          
           el.dispatchEvent(event);
         }
-        
-        // Simulate human-like typing
-        async function typeText(el, text, delays) {
-          for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            
-            // Dispatch keydown
-            dispatchKeyEvent(el, 'keydown', char);
-            
-            // Update value incrementally
-            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLInputElement.prototype,
-              'value'
-            ).set;
-            nativeInputValueSetter.call(el, el.value + char);
-            
-            // Dispatch input event with enhanced React compatibility
-            const inputEvent = new Event('input', {
-              bubbles: true,
-              cancelable: true
-            });
-            
-            // Add properties that React expects
-            Object.defineProperty(inputEvent, 'target', {
-              value: el,
-              enumerable: true
-            });
-            Object.defineProperty(inputEvent, 'currentTarget', {
-              value: el,
-              enumerable: true
-            });
-            Object.defineProperty(inputEvent, 'data', {
-              value: char,
-              enumerable: true
-            });
-            Object.defineProperty(inputEvent, 'inputType', {
-              value: 'insertText',
-              enumerable: true
-            });
-            
-            el.dispatchEvent(inputEvent);
-            
-            // Dispatch keyup
-            dispatchKeyEvent(el, 'keyup', char);
-            
-            // Random delay between keystrokes
-            if (i < text.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, delays[i]));
-            }
-          }
-        }
-        
-        // Generate random delays for each character
-        const delays = Array.from({ length: value.length }, () => 
-          options.minDelay + Math.random() * (options.maxDelay - options.minDelay)
-        );
         
         // Focus the element
         if (options.simulateFocus) {
           element.focus();
-          dispatchEvent(element, 'focus');
-          dispatchEvent(element, 'focusin');
+          dispatchReactEvent(element, 'focus');
+          dispatchReactEvent(element, 'focusin');
           await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        // Clear field if requested
-        if (options.clearFirst && element.value) {
-          // Select all text
-          element.select();
-          await new Promise(resolve => setTimeout(resolve, 50));
+        // Handle different field types
+        const tagName = element.tagName.toLowerCase();
+        const inputType = element.type || tagName;
+        
+        if (tagName === 'select') {
+          // Handle select dropdowns
+          if (value) {
+            // Try to find option by value first, then by text
+            let optionFound = false;
+            
+            for (let i = 0; i < element.options.length; i++) {
+              const option = element.options[i];
+              if (option.value === value || option.text === value || option.text.toLowerCase() === value.toLowerCase()) {
+                element.selectedIndex = i;
+                optionFound = true;
+                break;
+              }
+            }
+            
+            if (!optionFound && !isNaN(parseInt(value))) {
+              // Try setting by index if value is numeric
+              const index = parseInt(value);
+              if (index >= 0 && index < element.options.length) {
+                element.selectedIndex = index;
+                optionFound = true;
+              }
+            }
+            
+            if (!optionFound) {
+              throw new Error('Option not found: ' + value);
+            }
+          }
           
-          // Delete selected text
-          dispatchKeyEvent(element, 'keydown', 'Delete');
+          dispatchReactEvent(element, 'change');
           
-          // Use native setter for React compatibility
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype,
-            'value'
-          ).set;
-          nativeInputValueSetter.call(element, '');
+        } else if (inputType === 'radio') {
+          // Handle radio buttons
+          if (element.name) {
+            // Find the radio button with matching value
+            const radioButtons = document.querySelectorAll('input[type="radio"][name="' + element.name + '"]');
+            let targetRadio = null;
+            
+            for (const radio of radioButtons) {
+              if (radio.value === value || radio.value.toLowerCase() === value.toLowerCase()) {
+                targetRadio = radio;
+                break;
+              }
+            }
+            
+            if (targetRadio) {
+              // Uncheck all radio buttons in the group
+              radioButtons.forEach(radio => { radio.checked = false; });
+              
+              // Check the target radio button
+              targetRadio.checked = true;
+              dispatchReactEvent(targetRadio, 'change');
+            } else {
+              throw new Error('Radio option not found: ' + value);
+            }
+          } else {
+            // Single radio button
+            element.checked = (value === 'true' || value === '1' || value.toLowerCase() === 'yes');
+            dispatchReactEvent(element, 'change');
+          }
           
-          // Dispatch input event with React-compatible properties
-          const inputEvent = new Event('input', {
-            bubbles: true,
-            cancelable: true
-          });
-          Object.defineProperty(inputEvent, 'target', {
-            value: element,
-            enumerable: true
-          });
-          Object.defineProperty(inputEvent, 'currentTarget', {
-            value: element,
-            enumerable: true
-          });
-          Object.defineProperty(inputEvent, 'inputType', {
-            value: 'deleteContentBackward',
-            enumerable: true
-          });
-          element.dispatchEvent(inputEvent);
+        } else if (inputType === 'checkbox') {
+          // Handle checkboxes
+          const shouldCheck = (value === 'true' || value === '1' || value.toLowerCase() === 'yes' || value.toLowerCase() === 'on');
+          element.checked = shouldCheck;
+          dispatchReactEvent(element, 'change');
           
-          dispatchKeyEvent(element, 'keyup', 'Delete');
-          await new Promise(resolve => setTimeout(resolve, 100));
+        } else if (inputType === 'range') {
+          // Handle range sliders
+          const numValue = parseFloat(value);
+          if (!isNaN(numValue)) {
+            element.value = numValue.toString();
+            dispatchReactEvent(element, 'input');
+            dispatchReactEvent(element, 'change');
+          } else {
+            throw new Error('Invalid range value: ' + value);
+          }
+          
+        } else if (inputType === 'date' || inputType === 'datetime-local' || inputType === 'time' || inputType === 'month' || inputType === 'week') {
+          // Handle date/time inputs
+          element.value = value;
+          dispatchReactEvent(element, 'input');
+          dispatchReactEvent(element, 'change');
+          
+        } else {
+          // Handle text-like inputs (text, email, tel, url, password, number, etc.)
+          
+          // Clear field if requested
+          if (options.clearFirst && element.value) {
+            element.select();
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          
+          // For text inputs, simulate typing for realism
+          if (fieldType === 'text' || fieldType === 'email' || fieldType === 'tel' || fieldType === 'url') {
+            // Use native setter for React compatibility
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              'value'
+            ).set;
+            nativeInputValueSetter.call(element, '');
+            
+            // Type character by character
+            for (let i = 0; i < value.length; i++) {
+              const char = value[i];
+              
+              nativeInputValueSetter.call(element, element.value + char);
+              
+              dispatchReactEvent(element, 'input', {
+                data: char,
+                inputType: 'insertText'
+              });
+              
+              // Add small delay between keystrokes
+              if (i < value.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 
+                  options.minDelay + Math.random() * (options.maxDelay - options.minDelay)
+                ));
+              }
+            }
+          } else {
+            // For other inputs, set value directly
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              'value'
+            ).set;
+            nativeInputValueSetter.call(element, value);
+            
+            dispatchReactEvent(element, 'input', {
+              inputType: 'insertText'
+            });
+          }
+          
+          dispatchReactEvent(element, 'change');
         }
-        
-        // Type the new value
-        await typeText(element, value, delays);
-        
-        // Dispatch change event
-        dispatchEvent(element, 'change');
         
         // Blur the element
         if (options.simulateBlur) {
           await new Promise(resolve => setTimeout(resolve, 100));
-          dispatchEvent(element, 'blur');
-          dispatchEvent(element, 'focusout');
+          dispatchReactEvent(element, 'blur');
+          dispatchReactEvent(element, 'focusout');
           element.blur();
         }
         
@@ -315,12 +444,12 @@ export class FormInteractionService extends EventEmitter {
 
     // Fallback to ID
     if (field.id) {
-      return `#${CSS.escape(field.id)}`;
+      return `#${cssEscape(field.id)}`;
     }
 
     // Fallback to name attribute
     if (field.name) {
-      return `[name="${CSS.escape(field.name)}"]`;
+      return `[name="${cssEscape(field.name)}"]`;
     }
 
     // Build selector from attributes
@@ -330,13 +459,13 @@ export class FormInteractionService extends EventEmitter {
         field.attributes['data-qa'] ||
         field.attributes['data-test'];
       if (testId) {
-        return `[data-testid="${CSS.escape(testId)}"]`;
+        return `[data-testid="${cssEscape(testId)}"]`;
       }
     }
 
     // Last resort: type and placeholder
     if (field.type && field.placeholder) {
-      return `input[type="${field.type}"][placeholder="${CSS.escape(field.placeholder)}"]`;
+      return `input[type="${field.type}"][placeholder="${cssEscape(field.placeholder)}"]`;
     }
 
     throw new Error('Unable to generate selector for field');
