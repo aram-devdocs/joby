@@ -3,257 +3,158 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Test Form for Joby</title>
+    <title>Joby Test Forms Menu</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          sans-serif;
         max-width: 800px;
         margin: 50px auto;
         padding: 20px;
-        background: #f5f5f5;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
       }
-      .form-container {
+      .container {
         background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       }
       h1 {
         color: #333;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 10px;
+        margin-bottom: 10px;
       }
-      .form-group {
-        margin-bottom: 20px;
-      }
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #555;
-      }
-      input,
-      select,
-      textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-        box-sizing: border-box;
-      }
-      input:focus,
-      select:focus,
-      textarea:focus {
-        outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-      }
-      button {
-        background: #007bff;
-        color: white;
-        padding: 12px 30px;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
-        margin-right: 10px;
-      }
-      button:hover {
-        background: #0056b3;
-      }
-      .output {
-        margin-top: 20px;
-        padding: 15px;
-        background: #e9ecef;
-        border-radius: 4px;
-        font-family: monospace;
-        white-space: pre-wrap;
-      }
-      .form-section {
+      .subtitle {
+        color: #666;
         margin-bottom: 30px;
+      }
+      .menu {
+        display: grid;
+        gap: 15px;
+      }
+      .menu-item {
+        display: block;
         padding: 20px;
         background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+      }
+      .menu-item:hover {
+        background: #667eea;
+        color: white;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+      .menu-item h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+      }
+      .menu-item p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+      .status {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #28a745;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 20px;
+      }
+      .info {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f0f8ff;
+        border-left: 4px solid #667eea;
         border-radius: 4px;
       }
-      .required::after {
-        content: ' *';
-        color: red;
+      .info h4 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+      }
+      .info p {
+        margin: 5px 0;
+        color: #555;
+        font-size: 14px;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
       }
     </style>
   </head>
   <body>
-    <div class="form-container">
-      <h1>Job Application Test Form</h1>
+    <div class="container">
+      <h1>🧪 Joby Form Testing Suite</h1>
+      <p class="subtitle">Test the interactive form field editing feature</p>
 
-      <form id="jobApplicationForm">
-        <div class="form-section">
-          <h2>Personal Information</h2>
+      <div class="menu">
+        <a href="/basic-form.html" class="menu-item">
+          <h3>📝 Job Application Form</h3>
+          <p>
+            Complete job application with multiple sections, various field types
+            including text, email, select, and textarea
+          </p>
+        </a>
 
-          <div class="form-group">
-            <label for="firstName" class="required">First Name</label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              placeholder="John"
-              required
-            />
-          </div>
+        <a href="/simple-form.html" class="menu-item">
+          <h3>⚡ Simple Form</h3>
+          <p>
+            Basic form with username, email, and message fields - perfect for
+            quick testing
+          </p>
+        </a>
 
-          <div class="form-group">
-            <label for="lastName" class="required">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              placeholder="Doe"
-              required
-            />
-          </div>
+        <a href="/comprehensive-form.html" class="menu-item">
+          <h3>🎯 Comprehensive Form Test</h3>
+          <p>
+            All HTML5 input types with validation: email, tel, url, number,
+            date, select, radio, checkbox, and more with pattern matching &
+            constraints
+          </p>
+        </a>
 
-          <div class="form-group">
-            <label for="email" class="required">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="john.doe@example.com"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h2>Professional Details</h2>
-
-          <div class="form-group">
-            <label for="jobTitle">Current Job Title</label>
-            <input
-              type="text"
-              id="jobTitle"
-              name="jobTitle"
-              placeholder="Software Engineer"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="experience">Years of Experience</label>
-            <select id="experience" name="experience">
-              <option value="">Select...</option>
-              <option value="0-1">0-1 years</option>
-              <option value="1-3">1-3 years</option>
-              <option value="3-5">3-5 years</option>
-              <option value="5-10">5-10 years</option>
-              <option value="10+">10+ years</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="skills">Skills (comma separated)</label>
-            <input
-              type="text"
-              id="skills"
-              name="skills"
-              placeholder="JavaScript, React, Node.js"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="coverLetter">Cover Letter</label>
-            <textarea
-              id="coverLetter"
-              name="coverLetter"
-              rows="5"
-              placeholder="Tell us about yourself..."
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <button type="submit">Submit Application</button>
-          <button type="button" onclick="clearForm()">Clear Form</button>
-        </div>
-      </form>
-
-      <div id="output" class="output" style="display: none"></div>
-    </div>
-
-    <!-- Additional standalone inputs outside form (for testing) -->
-    <div class="form-container" style="margin-top: 30px">
-      <h2>Standalone Fields (Outside Form)</h2>
-      <div class="form-group">
-        <label for="standaloneInput">Standalone Input</label>
-        <input
-          type="text"
-          id="standaloneInput"
-          name="standaloneInput"
-          placeholder="Test standalone field"
-        />
+        <a
+          href="https://www.google.com/search"
+          class="menu-item"
+          target="_blank"
+        >
+          <h3>🔍 Google Search (External)</h3>
+          <p>Test with real-world form - Google's search input</p>
+        </a>
       </div>
-      <div class="form-group">
-        <label for="standaloneTextarea">Standalone Textarea</label>
-        <textarea
-          id="standaloneTextarea"
-          name="standaloneTextarea"
-          rows="3"
-          placeholder="Test standalone textarea"
-        ></textarea>
+
+      <span class="status">Server running on port 3001</span>
+
+      <div class="info">
+        <h4>📖 How to Test</h4>
+        <p>1. Navigate to one of the test forms using the Joby browser</p>
+        <p>
+          2. Look for the <strong>Interactive Form Fields</strong> panel on the
+          right
+        </p>
+        <p>3. Click <strong>"Edit"</strong> on any detected field</p>
+        <p>4. Type a new value in the input</p>
+        <p>5. Click <strong>"Sync Now"</strong> to update the browser field</p>
+        <p>6. Open DevTools (F12) to see debug logs</p>
+      </div>
+
+      <div class="info" style="background: #fff3cd; border-color: #ffc107">
+        <h4>🐛 Debug Info</h4>
+        <p>Console logs are enabled with prefixes:</p>
+        <p><code>[FormFieldEditor]</code> - When sync button is clicked</p>
+        <p><code>[InteractiveFormPanel]</code> - When sync handler is called</p>
+        <p><code>[syncField]</code> - Detailed sync process information</p>
       </div>
     </div>
-
-    <script>
-      // Form submission handler
-      document
-        .getElementById('jobApplicationForm')
-        .addEventListener('submit', function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-          const data = {};
-          for (let [key, value] of formData.entries()) {
-            data[key] = value;
-          }
-
-          const output = document.getElementById('output');
-          output.textContent =
-            'Form submitted with data:\n' + JSON.stringify(data, null, 2);
-          output.style.display = 'block';
-
-          console.log('Form submitted:', data);
-        });
-
-      // Clear form function
-      function clearForm() {
-        document.getElementById('jobApplicationForm').reset();
-        document.getElementById('output').style.display = 'none';
-      }
-
-      // Log all input changes (for debugging)
-      document.querySelectorAll('input, select, textarea').forEach((field) => {
-        field.addEventListener('input', function (e) {
-          console.log(
-            `Field "${e.target.name || e.target.id}" changed to:`,
-            e.target.value,
-          );
-        });
-      });
-
-      // Log when page loads
-      console.log(
-        'Test form page loaded. Fields found:',
-        document.querySelectorAll('input, select, textarea').length,
-      );
-    </script>
   </body>
 </html>

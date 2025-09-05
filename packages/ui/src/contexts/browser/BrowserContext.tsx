@@ -19,7 +19,11 @@ interface BrowserContextValue {
   // Interactive form fields
   interactiveFields: Map<string, InteractiveFormField>;
   setFieldEditing: (fieldId: string, isEditing: boolean) => void;
-  updateFieldValue: (fieldId: string, value: string) => void;
+  updateFieldValue: (
+    fieldId: string,
+    value: string,
+    fieldUpdates?: Partial<InteractiveFormField>,
+  ) => void;
   syncField: (fieldId: string) => Promise<void>;
   syncAllFields: () => Promise<void>;
   initializeInteractiveFields: (fields: FormField[]) => void;
@@ -75,16 +79,23 @@ export function BrowserProvider({
     });
   }, []);
 
-  const updateFieldValue = useCallback((fieldId: string, value: string) => {
-    setInteractiveFields((prev) => {
-      const newMap = new Map(prev);
-      const field = newMap.get(fieldId);
-      if (field) {
-        newMap.set(fieldId, { ...field, uiValue: value });
-      }
-      return newMap;
-    });
-  }, []);
+  const updateFieldValue = useCallback(
+    (
+      fieldId: string,
+      value: string,
+      fieldUpdates?: Partial<InteractiveFormField>,
+    ) => {
+      setInteractiveFields((prev) => {
+        const newMap = new Map(prev);
+        const field = newMap.get(fieldId);
+        if (field) {
+          newMap.set(fieldId, { ...field, uiValue: value, ...fieldUpdates });
+        }
+        return newMap;
+      });
+    },
+    [],
+  );
 
   const syncField = useCallback(
     async (fieldId: string) => {

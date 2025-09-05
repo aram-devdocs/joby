@@ -9,8 +9,10 @@ import { useBrowserContext } from '../contexts/browser/BrowserContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../atoms/card';
 import { Badge } from '../atoms/badge';
 import { ScrollArea } from '../atoms/scroll-area';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 import type { FormField, InteractiveFormField } from '../types/form';
+import { FormFieldInput } from '../molecules/FormFieldInput';
+import { validateField } from '../utils/formValidation';
 
 export interface InteractiveFormPanelProps {
   forms: Array<{ fields: FormField[] }>;
@@ -39,7 +41,6 @@ const QuickEditField: React.FC<{
   autoFocus = false,
 }) => {
   const [value, setValue] = useState(field.uiValue || field.browserValue || '');
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const isTabbing = useRef(false);
 
   // Update local value when field value changes
@@ -47,18 +48,8 @@ const QuickEditField: React.FC<{
     setValue(field.uiValue || field.browserValue || '');
   }, [field.uiValue, field.browserValue]);
 
-  useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      // Small delay to ensure the element is properly rendered
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 50);
-    }
-  }, [autoFocus]);
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && field.inputType !== 'textarea') {
       e.preventDefault();
       isTabbing.current = false;
       onSave(value);
@@ -85,21 +76,14 @@ const QuickEditField: React.FC<{
     isTabbing.current = false;
   };
 
-  const InputComponent = field.type === 'textarea' ? 'textarea' : 'input';
-
   return (
-    <InputComponent
-      ref={
-        inputRef as React.RefObject<HTMLInputElement> &
-          React.RefObject<HTMLTextAreaElement>
-      }
-      type={field.type !== 'textarea' ? field.type : undefined}
+    <FormFieldInput
+      field={field}
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={setValue}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
-      className="w-full px-2 py-1.5 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-      placeholder={field.placeholder || 'Enter value...'}
+      autoFocus={autoFocus}
     />
   );
 };
@@ -115,20 +99,39 @@ const FieldCard: React.FC<{
   const displayLabel =
     field.label || field.placeholder || field.name || 'Field';
   const hasValue = field.uiValue || field.browserValue || field.value;
-  const fieldType =
-    field.type === 'email'
-      ? 'Email'
-      : field.type === 'tel'
-        ? 'Phone'
-        : field.type === 'url'
-          ? 'URL'
-          : field.type === 'number'
-            ? 'Number'
-            : field.type === 'date'
-              ? 'Date'
-              : field.type === 'textarea'
-                ? 'Text Area'
-                : 'Text';
+
+  // Get field type display name
+  const getFieldTypeDisplay = () => {
+    switch (field.inputType) {
+      case 'email':
+        return 'Email';
+      case 'tel':
+        return 'Phone';
+      case 'url':
+        return 'URL';
+      case 'number':
+        return 'Number';
+      case 'date':
+        return 'Date';
+      case 'textarea':
+        return 'Text Area';
+      case 'select':
+        return 'Dropdown';
+      case 'radio':
+        return 'Radio';
+      case 'checkbox':
+        return 'Checkbox';
+      case 'password':
+        return 'Password';
+      default:
+        return 'Text';
+    }
+  };
+
+  const fieldType = getFieldTypeDisplay();
+
+  // Validate the current value
+  const validation = validateField(field, field.uiValue || '');
 
   return (
     <div
@@ -157,6 +160,12 @@ const FieldCard: React.FC<{
             <Badge variant="outline" className="text-xs py-0 px-1">
               {fieldType}
             </Badge>
+            {!validation.isValid && field.uiValue && (
+              <Badge variant="destructive" className="text-xs py-0 px-1">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                Invalid
+              </Badge>
+            )}
             {field.name && (
               <span className="text-xs text-gray-500 truncate">
                 {field.name}
@@ -208,9 +217,20 @@ const FieldCard: React.FC<{
       ) : (
         <div className="text-sm">
           {hasValue ? (
-            <span className="text-gray-700">
-              {field.uiValue || field.browserValue || field.value}
-            </span>
+            <div>
+              <span className="text-gray-700">
+                {field.inputType === 'checkbox'
+                  ? field.uiValue === 'true' || field.uiValue === 'on'
+                    ? '✓ Checked'
+                    : '☐ Unchecked'
+                  : field.inputType === 'password'
+                    ? '••••••••'
+                    : field.uiValue || field.browserValue || field.value}
+              </span>
+              {!validation.isValid && field.uiValue && validation.error && (
+                <p className="text-xs text-red-500 mt-1">{validation.error}</p>
+              )}
+            </div>
           ) : (
             <span className="text-gray-400 italic">Click to enter value</span>
           )}
@@ -293,29 +313,78 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
 
   const handleFieldSave = useCallback(
     async (fieldId: string, value: string) => {
-      // Update the value immediately for instant feedback
-      updateFieldValue(fieldId, value);
+      const field = interactiveFields.get(fieldId);
+      if (!field) return;
 
-      // Clear active field to show we're done editing
-      setActiveFieldId(null);
+      // Validate BEFORE saving or syncing
+      const validation = validateField(field, value);
 
-      // Sync to browser in background - this will show visual feedback
-      // Small delay to ensure state update is processed
-      setTimeout(() => {
-        syncField(fieldId).catch(() => {
-          // Error is handled in syncField by setting error status
-        });
-      }, 50);
+      if (!validation.isValid && value) {
+        // Update UI value but mark as invalid - DO NOT sync to browser
+        const updatedField: Partial<InteractiveFormField> = {
+          isValid: false,
+          syncStatus: 'error',
+        };
+        if (validation.error) {
+          updatedField.validationError = validation.error;
+        }
+        updateFieldValue(fieldId, value, updatedField);
+
+        // Keep field active to show error
+        // User needs to fix the value before we clear the active state
+        return; // Exit early - don't sync invalid data
+      } else {
+        // Valid value - update and mark as valid
+        const updatedField: Partial<InteractiveFormField> = {
+          isValid: true,
+          syncStatus: 'idle',
+        };
+        // Note: validationError will be omitted from updatedField,
+        // which allows the field to clear its error naturally
+        updateFieldValue(fieldId, value, updatedField);
+
+        // Clear active field to show we're done editing
+        setActiveFieldId(null);
+
+        // Sync to browser in background - only valid data
+        // Small delay to ensure state update is processed
+        setTimeout(() => {
+          syncField(fieldId).catch(() => {
+            // Error is handled in syncField by setting error status
+          });
+        }, 50);
+      }
     },
-    [updateFieldValue, syncField],
+    [interactiveFields, updateFieldValue, syncField],
   );
 
   const handleTabNext = useCallback(
     async (fieldId: string, value: string) => {
-      // Save the current field value
+      const field = interactiveFields.get(fieldId);
+      if (!field) return;
+
+      // Validate before saving and moving to next field
+      const validation = validateField(field, value);
+
+      if (!validation.isValid && value) {
+        // Invalid value - update UI but don't sync
+        const updatedField: Partial<InteractiveFormField> = {
+          isValid: false,
+          syncStatus: 'error',
+        };
+        if (validation.error) {
+          updatedField.validationError = validation.error;
+        }
+        updateFieldValue(fieldId, value, updatedField);
+
+        // Stay on current field to fix the error
+        return; // Don't move to next field if current is invalid
+      }
+
+      // Valid value - save and sync
       updateFieldValue(fieldId, value);
 
-      // Start sync in background with small delay
+      // Start sync in background with small delay (only for valid data)
       setTimeout(() => {
         syncField(fieldId).catch(() => {
           // Error is handled in syncField by setting error status
@@ -345,10 +414,31 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
 
   const handleTabPrevious = useCallback(
     async (fieldId: string, value: string) => {
-      // Save the current field value
+      const field = interactiveFields.get(fieldId);
+      if (!field) return;
+
+      // Validate before saving and moving to previous field
+      const validation = validateField(field, value);
+
+      if (!validation.isValid && value) {
+        // Invalid value - update UI but don't sync
+        const updatedField: Partial<InteractiveFormField> = {
+          isValid: false,
+          syncStatus: 'error',
+        };
+        if (validation.error) {
+          updatedField.validationError = validation.error;
+        }
+        updateFieldValue(fieldId, value, updatedField);
+
+        // Stay on current field to fix the error
+        return; // Don't move to previous field if current is invalid
+      }
+
+      // Valid value - save and sync
       updateFieldValue(fieldId, value);
 
-      // Start sync in background with small delay
+      // Start sync in background with small delay (only for valid data)
       setTimeout(() => {
         syncField(fieldId).catch(() => {
           // Error is handled in syncField by setting error status

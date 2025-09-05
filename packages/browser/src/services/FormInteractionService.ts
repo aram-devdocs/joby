@@ -36,6 +36,17 @@ export class FormInteractionService extends EventEmitter {
     const opts = { ...this.typingDefaults, ...options };
     const selector = this.getBestSelector(field);
 
+    // Server-side validation before generating update script
+    const validationError = this.validateFieldValue(field, value);
+    if (validationError) {
+      // Return error script instead of update
+      return `
+        (function() {
+          throw new Error('Validation failed: ${validationError}');
+        })();
+      `;
+    }
+
     return `
       (async function updateField() {
         const selector = ${JSON.stringify(selector)};
@@ -332,38 +343,347 @@ export class FormInteractionService extends EventEmitter {
   }
 
   /**
-   * Calculate typing pattern to mimic human behavior
+   * Validate field value on the server side before sending to browser
+   */
+  private validateFieldValue(field: FormField, value: string): string | null {
+    // Skip validation for empty values (unless required)
+    if (!value && !field.required) {
+      return null;
+    }
+
+    // Required field validation
+    if (field.required && !value.trim()) {
+      return 'This field is required';
+    }
+
+    // Email validation
+    if (field.inputType === 'email' && value) {
+      const emailRegex =
+        /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+      if (!emailRegex.test(value)) {
+        return 'Invalid email format';
+      }
+    }
+
+    // Phone validation
+    if (field.inputType === 'tel' && value) {
+      const phoneDigits = value.replace(/\D/g, '');
+      if (phoneDigits.length !== 10) {
+        return 'Phone number must be exactly 10 digits';
+      }
+      if (phoneDigits[0] === '0' || phoneDigits[0] === '1') {
+        return 'Invalid phone number format';
+      }
+    }
+
+    // URL validation
+    if (field.inputType === 'url' && value) {
+      try {
+        new URL(value);
+      } catch {
+        return 'Invalid URL format';
+      }
+    }
+
+    // Number validation
+    if (field.inputType === 'number' && value) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        return 'Must be a valid number';
+      }
+
+      if (field.min !== undefined && numValue < Number(field.min)) {
+        return `Value must be at least ${field.min}`;
+      }
+
+      if (field.max !== undefined && numValue > Number(field.max)) {
+        return `Value must be at most ${field.max}`;
+      }
+    }
+
+    // Pattern validation
+    if (field.pattern && value) {
+      try {
+        const regex = new RegExp(field.pattern);
+        if (!regex.test(value)) {
+          return `Value does not match required pattern`;
+        }
+      } catch {
+        // Invalid pattern, skip validation
+      }
+    }
+
+    return null; // No validation errors
+  }
+
+  /**
+   * Calculate typing pattern to mimic human behavior using advanced techniques
    */
   generateTypingPattern(text: string): number[] {
     const delays: number[] = [];
-    const baseDelay = 80; // Base typing speed in ms
+    const baseDelay = 85; // Base typing speed in ms (slightly slower for realism)
+
+    // Generate a unique fingerprint for this typing session using multiple entropy sources
+    const sessionSalt =
+      Math.random() * 1000000 + Date.now() + Math.random() * text.length;
+    const fingerprintSeed = this.generateSessionFingerprint(text, sessionSalt);
+
+    // Character difficulty mapping (harder to type = longer delay)
+    const charDifficulty: Record<string, number> = {
+      // Numbers and symbols require more precision
+      '1': 1.2,
+      '2': 1.2,
+      '3': 1.2,
+      '4': 1.2,
+      '5': 1.2,
+      '6': 1.2,
+      '7': 1.2,
+      '8': 1.2,
+      '9': 1.2,
+      '0': 1.2,
+      '!': 1.4,
+      '@': 1.4,
+      '#': 1.4,
+      $: 1.4,
+      '%': 1.4,
+      '^': 1.4,
+      '&': 1.4,
+      '*': 1.4,
+      '(': 1.3,
+      ')': 1.3,
+      '-': 1.1,
+      _: 1.3,
+      '=': 1.2,
+      '+': 1.3,
+      '[': 1.3,
+      ']': 1.3,
+      '{': 1.4,
+      '}': 1.4,
+      '\\': 1.4,
+      '|': 1.4,
+      ';': 1.2,
+      ':': 1.3,
+      "'": 1.1,
+      '"': 1.3,
+      ',': 1.1,
+      '.': 1.1,
+      '<': 1.3,
+      '>': 1.3,
+      '/': 1.2,
+      '?': 1.3,
+      '`': 1.3,
+      '~': 1.4,
+    };
+
+    // Common bigram patterns (two-character combinations) and their speed modifiers
+    const bigramSpeed: Record<string, number> = {
+      th: 0.85,
+      he: 0.85,
+      in: 0.85,
+      er: 0.85,
+      an: 0.85,
+      ed: 0.85,
+      nd: 0.85,
+      to: 0.85,
+      en: 0.85,
+      ti: 0.85,
+      es: 0.85,
+      or: 0.85,
+      te: 0.85,
+      of: 0.85,
+      be: 0.85,
+      qu: 1.2,
+      x: 1.3,
+      z: 1.2, // Less common combinations are slower
+    };
+
+    // Simulate fatigue - typing gets slightly slower over time
+    const fatigueRate = 0.002; // Small increase in delay per character
 
     for (let i = 0; i < text.length - 1; i++) {
-      // Add variation for more realistic typing
       let delay = baseDelay;
+      const currentChar = text[i]?.toLowerCase();
+      const nextChar = text[i + 1]?.toLowerCase();
 
-      // Longer pause after spaces
-      if (text[i] === ' ') {
-        delay += Math.random() * 50;
+      if (!currentChar) continue; // Skip if character is undefined
+
+      const bigram = currentChar + (nextChar || '');
+
+      // Apply unique fingerprint variation for this character position
+      const positionFingerprint = this.getPositionFingerprint(
+        fingerprintSeed,
+        i,
+        text.length,
+      );
+      delay *= 0.85 + positionFingerprint * 0.3; // Vary base delay by ±15%
+
+      // Apply character difficulty
+      const originalChar = text[i];
+      if (originalChar && charDifficulty[originalChar]) {
+        delay *= charDifficulty[originalChar];
       }
 
-      // Occasional longer pauses (thinking)
-      if (Math.random() < 0.1) {
-        delay += Math.random() * 200;
+      // Apply bigram speed adjustment
+      if (bigramSpeed[bigram]) {
+        delay *= bigramSpeed[bigram];
       }
 
-      // Faster for repeated characters
-      if (text[i] === text[i + 1]) {
-        delay *= 0.8;
+      // Longer pause after punctuation (natural reading rhythm)
+      if (originalChar && /[.!?]/.test(originalChar)) {
+        delay += 150 + Math.random() * 100;
       }
 
-      // Add random variation
-      delay += (Math.random() - 0.5) * 40;
+      // Moderate pause after commas and semicolons
+      if (originalChar && /[,;]/.test(originalChar)) {
+        delay += 80 + Math.random() * 60;
+      }
 
-      // Ensure minimum delay
-      delays.push(Math.max(30, delay));
+      // Longer pause after spaces (word boundaries)
+      if (originalChar === ' ') {
+        delay += 40 + Math.random() * 80;
+      }
+
+      // Pause before capital letters (shift key coordination)
+      const nextOriginalChar = text[i + 1];
+      if (
+        nextChar &&
+        nextOriginalChar &&
+        nextOriginalChar !== nextOriginalChar.toLowerCase() &&
+        originalChar !== ' '
+      ) {
+        delay += 20 + Math.random() * 30;
+      }
+
+      // Faster for repeated characters (muscle memory)
+      if (originalChar === text[i + 1]) {
+        delay *= 0.75;
+      }
+
+      // Occasional hesitation/thinking pauses (more realistic distribution)
+      const hesitationChance = Math.random();
+      if (hesitationChance < 0.05) {
+        // 5% chance of long pause
+        delay += 300 + Math.random() * 500;
+      } else if (hesitationChance < 0.15) {
+        // 10% chance of medium pause
+        delay += 100 + Math.random() * 200;
+      }
+
+      // Apply fatigue effect
+      delay += i * fatigueRate;
+
+      // Natural rhythm variation using sine wave for more organic feel
+      const rhythmVariation = Math.sin(i * 0.3) * 15;
+      delay += rhythmVariation;
+
+      // Apply unique wave pattern based on session fingerprint
+      const uniqueWave = this.generateUniqueWave(
+        fingerprintSeed,
+        i,
+        text.length,
+      );
+      delay += uniqueWave * 35; // Add unique wave variation
+
+      // Final random variation with normal distribution approximation
+      const randomVar1 = Math.random();
+      const randomVar2 = Math.random();
+      const normalRandom =
+        Math.sqrt(-2 * Math.log(randomVar1)) *
+        Math.cos(2 * Math.PI * randomVar2);
+      delay += normalRandom * 25; // Standard deviation of 25ms
+
+      // Add micro-jitter based on character content and position for true uniqueness
+      const microJitter = this.generateMicroJitter(
+        originalChar || '',
+        i,
+        fingerprintSeed,
+      );
+      delay += microJitter;
+
+      // Ensure realistic bounds (humans can't type faster than ~20ms between keys)
+      delays.push(Math.max(20, Math.min(delay, 2000)));
     }
 
     return delays;
+  }
+
+  /**
+   * Generate a unique session fingerprint based on multiple entropy sources
+   */
+  private generateSessionFingerprint(text: string, salt: number): number {
+    // Combine multiple sources of entropy
+    const textHash = this.simpleHash(text);
+    const timeComponent = Date.now() % 1000000;
+    const randomComponent = Math.random() * 1000000;
+    const lengthComponent = text.length * 137; // Prime multiplier
+
+    return (
+      (textHash + timeComponent + randomComponent + lengthComponent + salt) %
+      1000000
+    );
+  }
+
+  /**
+   * Get position-specific fingerprint variation
+   */
+  private getPositionFingerprint(
+    seed: number,
+    position: number,
+    textLength: number,
+  ): number {
+    // Create deterministic but unique variation for each position
+    const positionSeed = (seed + position * 17 + textLength * 23) % 1000000;
+    return (Math.sin(positionSeed * 0.001) + 1) / 2; // Normalize to 0-1
+  }
+
+  /**
+   * Generate unique wave pattern for this typing session
+   */
+  private generateUniqueWave(
+    seed: number,
+    position: number,
+    _textLength: number,
+  ): number {
+    // Multiple overlapping waves with different frequencies based on session fingerprint
+    const wave1 = Math.sin((position + seed * 0.001) * 0.2) * 0.4;
+    const wave2 = Math.sin((position + seed * 0.002) * 0.7) * 0.3;
+    const wave3 = Math.sin((position + seed * 0.003) * 1.3) * 0.2;
+    const wave4 = Math.cos((position + seed * 0.001) * 0.5) * 0.1;
+
+    return wave1 + wave2 + wave3 + wave4;
+  }
+
+  /**
+   * Generate micro-jitter based on character and position
+   */
+  private generateMicroJitter(
+    char: string,
+    position: number,
+    seed: number,
+  ): number {
+    // Character-specific jitter
+    const charCode = char.charCodeAt(0) || 0;
+    const charJitter = Math.sin(charCode * 0.1 + seed * 0.001) * 8;
+
+    // Position-specific jitter with prime number spacing
+    const positionJitter = Math.cos(position * 0.31 + seed * 0.002) * 6;
+
+    // Combined entropy jitter
+    const entropyJitter = Math.sin((charCode + position + seed) * 0.001) * 4;
+
+    return charJitter + positionJitter + entropyJitter;
+  }
+
+  /**
+   * Simple hash function for text content
+   */
+  private simpleHash(text: string): number {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 }

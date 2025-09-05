@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
-import { FormInfo, FormField } from './BrowserService';
+import { FormInfo, FormField, FormSelectOption } from './BrowserService';
 
 export class FormAnalyzer {
   analyzeHTML(html: string): FormInfo[] {
@@ -75,12 +75,53 @@ export class FormAnalyzer {
     // Detect section from HTML structure
     const section = this.detectFieldSection($, $field);
 
+    // Determine the proper input type
+    let inputType: FormField['inputType'] = 'text';
+    if (tagName === 'select') {
+      inputType = 'select';
+    } else if (tagName === 'textarea') {
+      inputType = 'textarea';
+    } else if (type === 'radio') {
+      inputType = 'radio';
+    } else if (type === 'checkbox') {
+      inputType = 'checkbox';
+    } else if (type === 'email') {
+      inputType = 'email';
+    } else if (type === 'tel') {
+      inputType = 'tel';
+    } else if (type === 'url') {
+      inputType = 'url';
+    } else if (type === 'number') {
+      inputType = 'number';
+    } else if (
+      type === 'date' ||
+      type === 'datetime-local' ||
+      type === 'time' ||
+      type === 'month' ||
+      type === 'week'
+    ) {
+      inputType = 'date';
+    } else if (type === 'password') {
+      inputType = 'password';
+    } else if (type === 'range') {
+      inputType = 'range';
+    } else if (type === 'color') {
+      inputType = 'color';
+    } else if (type === 'search') {
+      inputType = 'search';
+    }
+
+    // Ensure inputType is always set (fallback to 'text' for any unknown types)
+    if (!inputType) {
+      inputType = 'text';
+    }
+
     const field: FormField = {
       id: $field.attr('id') ?? '',
       name: $field.attr('name') ?? '',
       type,
+      inputType,
       placeholder: $field.attr('placeholder') ?? '',
-      ...(section && { section }),
       required:
         $field.attr('required') !== undefined ||
         $field.attr('aria-required') === 'true',
@@ -88,6 +129,55 @@ export class FormAnalyzer {
       selector: this.generateSelector($field, tagName),
       attributes: this.extractAttributes($field),
     };
+
+    // Add section if present
+    if (section) {
+      field.section = section;
+    }
+
+    // Add HTML5 validation attributes if present
+    const pattern = $field.attr('pattern');
+    if (pattern) {
+      field.pattern = pattern;
+    }
+
+    const minLength = parseInt($field.attr('minlength') || '0');
+    if (minLength > 0) {
+      field.minLength = minLength;
+    }
+
+    const maxLength = parseInt($field.attr('maxlength') || '0');
+    if (maxLength > 0) {
+      field.maxLength = maxLength;
+    }
+
+    const min = $field.attr('min');
+    if (min) {
+      field.min = min;
+    }
+
+    const max = $field.attr('max');
+    if (max) {
+      field.max = max;
+    }
+
+    const step = $field.attr('step');
+    if (step) {
+      field.step = step;
+    }
+
+    if ($field.attr('multiple') !== undefined) {
+      field.multiple = true;
+    }
+
+    if ($field.attr('checked') !== undefined) {
+      field.checked = true;
+    }
+
+    const autocomplete = $field.attr('autocomplete');
+    if (autocomplete) {
+      field.autocomplete = autocomplete;
+    }
 
     // Try to find associated label
     const id = field.id;
@@ -106,16 +196,56 @@ export class FormAnalyzer {
       }
     }
 
-    // For select fields, extract options
+    // For select fields, extract options with labels
     if (tagName === 'select') {
-      field.options = [];
+      const selectOptions: FormSelectOption[] = [];
       $field.find('option').each((_, optionEl) => {
         const $option = $(optionEl);
         const value = $option.val() as string;
-        if (value) {
-          field.options?.push(value);
+        const label = $option.text().trim();
+        const selected = $option.attr('selected') !== undefined;
+        if (value || label) {
+          selectOptions.push({
+            value: value || label,
+            label: label || value,
+            selected,
+          });
         }
       });
+      if (selectOptions.length > 0) {
+        field.options = selectOptions;
+      }
+    }
+
+    // For radio buttons and checkboxes that share the same name, group them
+    if (type === 'radio' || type === 'checkbox') {
+      // Get all inputs with the same name
+      const sameName = $(`input[name="${field.name}"]`);
+      if (sameName.length > 1) {
+        const radioOptions: FormSelectOption[] = [];
+        sameName.each((_, el) => {
+          const $el = $(el);
+          const val = $el.val() as string;
+          const labelFor = $el.attr('id')
+            ? $(`label[for="${$el.attr('id')}"]`)
+                .text()
+                .trim()
+            : '';
+          const parentLabel = !labelFor
+            ? $el.closest('label').text().trim()
+            : '';
+          const label = labelFor || parentLabel || val;
+
+          radioOptions.push({
+            value: val,
+            label,
+            selected: $el.attr('checked') !== undefined,
+          });
+        });
+        if (radioOptions.length > 0) {
+          field.options = radioOptions;
+        }
+      }
     }
 
     return field;
