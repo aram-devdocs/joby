@@ -81,6 +81,8 @@ export class FormAnalyzer {
         $field.attr('required') !== undefined ||
         $field.attr('aria-required') === 'true',
       value: $field.val() as string,
+      selector: this.generateSelector($field, tagName),
+      attributes: this.extractAttributes($field),
     };
 
     // Try to find associated label
@@ -113,6 +115,78 @@ export class FormAnalyzer {
     }
 
     return field;
+  }
+
+  private generateSelector(
+    $field: cheerio.Cheerio<AnyNode>,
+    tagName: string,
+  ): string {
+    // Priority 1: ID selector
+    const id = $field.attr('id');
+    if (id) {
+      return `#${CSS.escape(id)}`;
+    }
+
+    // Priority 2: Name attribute selector
+    const name = $field.attr('name');
+    if (name) {
+      return `${tagName}[name="${CSS.escape(name)}"]`;
+    }
+
+    // Priority 3: Unique attribute combination
+    const type = $field.attr('type');
+    const placeholder = $field.attr('placeholder');
+    let selector = tagName;
+
+    if (type) {
+      selector += `[type="${CSS.escape(type)}"]`;
+    }
+    if (placeholder) {
+      selector += `[placeholder="${CSS.escape(placeholder)}"]`;
+    }
+
+    // Priority 4: Position-based selector
+    const parent = $field.parent();
+    const index = parent.children(tagName).index($field[0]);
+    if (index >= 0) {
+      selector += `:nth-of-type(${index + 1})`;
+    }
+
+    return selector;
+  }
+
+  private extractAttributes(
+    $field: cheerio.Cheerio<AnyNode>,
+  ): Record<string, string> {
+    const attributes: Record<string, string> = {};
+    const element = $field[0];
+
+    if (element && 'attribs' in element) {
+      const attribs = element.attribs as Record<string, string>;
+      // Extract relevant attributes for field identification
+      const relevantAttrs = [
+        'class',
+        'data-testid',
+        'data-qa',
+        'data-test',
+        'aria-label',
+        'aria-describedby',
+        'autocomplete',
+        'maxlength',
+        'pattern',
+        'step',
+        'min',
+        'max',
+      ];
+
+      for (const attr of relevantAttrs) {
+        if (attribs[attr]) {
+          attributes[attr] = attribs[attr];
+        }
+      }
+    }
+
+    return attributes;
   }
 
   detectJobApplicationFields(fields: FormField[]): Record<string, FormField[]> {

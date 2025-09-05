@@ -1,6 +1,12 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { OllamaService } from '@packages/llm';
-import { BrowserService, FormAnalyzer } from '@packages/browser';
+import {
+  BrowserService,
+  FormAnalyzer,
+  FormInteractionService,
+  type FormField,
+  type TypingOptions,
+} from '@packages/browser';
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -49,6 +55,7 @@ app.on('activate', () => {
 const ollamaService = new OllamaService();
 const browserService = new BrowserService();
 const formAnalyzer = new FormAnalyzer();
+const formInteractionService = new FormInteractionService();
 
 // IPC handlers for Ollama
 ipcMain.handle('ollama:setHost', async (_event, host: string) => {
@@ -98,3 +105,31 @@ ipcMain.on(
     browserService.onNavigationComplete(url, title);
   },
 );
+
+// IPC handlers for Form Interaction
+ipcMain.handle(
+  'form:updateField',
+  (_event, field: FormField, value: string, options?: TypingOptions) => {
+    const script = formInteractionService.generateFieldUpdateScript(
+      field,
+      value,
+      options,
+    );
+    return { script };
+  },
+);
+
+ipcMain.handle('form:focusField', (_event, field: FormField) => {
+  const script = formInteractionService.generateFieldFocusScript(field);
+  return { script };
+});
+
+ipcMain.handle('form:getFieldValue', (_event, field: FormField) => {
+  const script = formInteractionService.generateFieldValueScript(field);
+  return { script };
+});
+
+ipcMain.handle('form:monitorFields', (_event, fields: FormField[]) => {
+  const script = formInteractionService.generateFieldMonitorScript(fields);
+  return { script };
+});

@@ -8,7 +8,6 @@ export { useBrowserNavigation } from '../../hooks/useBrowserNavigation';
 export type {
   BrowserAPI,
   FormData,
-  FormField,
 } from '../../contexts/browser/BrowserContext';
 export type {
   BrowserNavigationState,

@@ -39,6 +39,11 @@ export interface FormField {
   required: boolean;
   value?: string;
   options?: string[];
+  // Enhanced field targeting
+  selector?: string; // CSS selector for precise field targeting
+  xpath?: string; // XPath as fallback
+  position?: { x: number; y: number; width: number; height: number }; // Visual position
+  attributes?: Record<string, string>; // Additional attributes for identification
 }
 
 export class BrowserService extends EventEmitter {

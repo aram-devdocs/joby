@@ -1,3 +1,26 @@
+export interface FormField {
+  id?: string;
+  name?: string;
+  type: string;
+  label?: string;
+  placeholder?: string;
+  required: boolean;
+  value?: string;
+  options?: string[];
+  selector?: string;
+  xpath?: string;
+  position?: { x: number; y: number; width: number; height: number };
+  attributes?: Record<string, string>;
+}
+
+export interface TypingOptions {
+  minDelay?: number;
+  maxDelay?: number;
+  clearFirst?: boolean;
+  simulateFocus?: boolean;
+  simulateBlur?: boolean;
+}
+
 export interface ElectronAPI {
   platform: string;
   versions: {
@@ -18,12 +41,22 @@ export interface ElectronAPI {
     detectJobSite: (url: string) => Promise<string | null>;
     analyzeHTML: (html: string) => Promise<{
       forms: Array<{
-        fields: Array<{ name: string; type: string; required: boolean }>;
+        fields: FormField[];
       }>;
       summary: string;
     }>;
     onNavigationStart: (url: string) => void;
     onNavigationComplete: (url: string, title?: string) => void;
+  };
+  form: {
+    updateField: (
+      field: FormField,
+      value: string,
+      options?: TypingOptions,
+    ) => Promise<{ script: string }>;
+    focusField: (field: FormField) => Promise<{ script: string }>;
+    getFieldValue: (field: FormField) => Promise<{ script: string }>;
+    monitorFields: (fields: FormField[]) => Promise<{ script: string }>;
   };
 }
 

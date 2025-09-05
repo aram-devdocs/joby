@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Test Form</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #45a049;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f0f0f0;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simple Test Form</h1>
+
+    <form id="simpleForm">
+      <label for="username">Username:</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        placeholder="Enter username"
+      />
+
+      <label for="email">Email:</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="user@example.com"
+      />
+
+      <label for="message">Message:</label>
+      <textarea
+        id="message"
+        name="message"
+        rows="4"
+        placeholder="Type your message here..."
+      ></textarea>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="result" class="result" style="display: none"></div>
+
+    <script>
+      document
+        .getElementById('simpleForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          const data = Object.fromEntries(formData);
+
+          // Show result
+          const resultDiv = document.getElementById('result');
+          resultDiv.innerHTML =
+            '<strong>Form Data:</strong><br>' +
+            JSON.stringify(data, null, 2).replace(/\n/g, '<br>');
+          resultDiv.style.display = 'block';
+
+          console.log('Form submitted:', data);
+        });
+
+      // Log field changes
+      document.querySelectorAll('input, textarea').forEach((field) => {
+        field.addEventListener('input', (e) => {
+          console.log(`Field "${e.target.name}" value:`, e.target.value);
+        });
+      });
+    </script>
+  </body>
+</html>

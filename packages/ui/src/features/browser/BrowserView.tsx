@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Badge, Card, CardHeader, CardTitle } from '../../atoms';
 import { Globe, CheckCircle, Loader2 } from 'lucide-react';
-import { useBrowserContext } from '../../contexts/browser/BrowserContext';
+import {
+  useBrowserContext,
+  type BrowserAPI,
+} from '../../contexts/browser/BrowserContext';
 import type {
   WebviewElement,
   NavigationEvent,
@@ -14,6 +17,8 @@ interface FormField {
   id: string;
   placeholder: string;
   required: boolean;
+  value?: string;
+  selector?: string;
 }
 
 interface Form {
@@ -29,15 +34,35 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   onFormDetected,
   onNavigationChange,
 }) => {
-  const { browserAPI } = useBrowserContext();
+  const { browserAPI, setBrowserAPI } = useBrowserContext();
   const webviewRef = useRef<WebviewElement | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
-  const [currentUrl, setCurrentUrl] = useState('https://www.google.com');
-  const [inputUrl, setInputUrl] = useState('https://www.google.com');
+  const [currentUrl, setCurrentUrl] = useState('http://localhost:3001');
+  const [inputUrl, setInputUrl] = useState('http://localhost:3001');
   const [pageTitle, setPageTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [jobSite, setJobSite] = useState<string | null>(null);
 
+  // Set up the executeScript function once when webview is ready
+  useEffect(() => {
+    const webview = webviewRef.current;
+    if (!webview) return;
+
+    // Create executeScript function for the browser API
+    const executeScript = async (script: string) => {
+      const currentWebview = webviewRef.current;
+      if (!currentWebview) throw new Error('Webview not available');
+      return currentWebview.executeJavaScript(script);
+    };
+
+    // Update browser API with executeScript
+    const newBrowserAPI: BrowserAPI = browserAPI?.detectJobSite
+      ? { detectJobSite: browserAPI.detectJobSite, executeScript }
+      : { executeScript };
+    setBrowserAPI(newBrowserAPI);
+  }, [setBrowserAPI, browserAPI?.detectJobSite]); // Only re-run if these change
+
+  // Set up webview event handlers
   useEffect(() => {
     const webview = webviewRef.current;
     if (!webview) return;
@@ -50,22 +75,40 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
     const handleDOMReady = () => {
       setIsLoading(false);
 
-      // Inject form detection script
+      // Inject enhanced form detection script
       webview
         .executeJavaScript<Form[]>(
           `
         (function() {
           const forms = [];
+          
+          // Helper to generate CSS selector for an element
+          function getSelector(element) {
+            if (element.id) {
+              return '#' + CSS.escape(element.id);
+            }
+            if (element.name) {
+              return element.tagName.toLowerCase() + '[name="' + CSS.escape(element.name) + '"]';
+            }
+            // Fallback to tag and index
+            const parent = element.parentElement;
+            const siblings = Array.from(parent.children).filter(el => el.tagName === element.tagName);
+            const index = siblings.indexOf(element);
+            return element.tagName.toLowerCase() + ':nth-of-type(' + (index + 1) + ')';
+          }
+          
           document.querySelectorAll('form').forEach(form => {
             const fields = [];
             form.querySelectorAll('input, select, textarea').forEach(field => {
-              if (field.type !== 'hidden' && field.type !== 'submit') {
+              if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
                 fields.push({
-                  name: field.name,
+                  name: field.name || '',
                   type: field.type || field.tagName.toLowerCase(),
-                  id: field.id,
-                  placeholder: field.placeholder,
-                  required: field.required
+                  id: field.id || '',
+                  placeholder: field.placeholder || '',
+                  required: field.required || false,
+                  value: field.value || '',
+                  selector: getSelector(field)
                 });
               }
             });
@@ -73,6 +116,28 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
               forms.push({ fields });
             }
           });
+          
+          // Also check for fields outside forms (common in SPAs)
+          const orphanFields = [];
+          document.querySelectorAll('input, select, textarea').forEach(field => {
+            const inForm = field.closest('form');
+            if (!inForm && field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
+              orphanFields.push({
+                name: field.name || '',
+                type: field.type || field.tagName.toLowerCase(),
+                id: field.id || '',
+                placeholder: field.placeholder || '',
+                required: field.required || false,
+                value: field.value || '',
+                selector: getSelector(field)
+              });
+            }
+          });
+          
+          if (orphanFields.length > 0) {
+            forms.push({ fields: orphanFields });
+          }
+          
           return forms;
         })()
       `,
@@ -163,7 +228,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       );
       webview.removeEventListener('page-title-updated', handlePageTitleUpdated);
     };
-  }, [currentUrl, onFormDetected, onNavigationChange, browserAPI]);
+  }, [onFormDetected, onNavigationChange, browserAPI]);
 
   const handleUrlSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -260,7 +325,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           }}
           partition="persist:joby"
           webpreferences="contextIsolation=yes,nodeIntegration=no"
-          allowpopups
+          allowpopups={true}
         />
       </div>
     </div>
