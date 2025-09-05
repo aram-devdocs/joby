@@ -54,13 +54,11 @@ export interface ElectronAPI {
       enabled: boolean,
     ) => Promise<{ success: boolean; llmEnabled: boolean }>;
     getEnhancementConfig: () => Promise<{
-      enableStatic: boolean;
       enableLLM: boolean;
       enableCache: boolean;
       selectedModel?: string;
     }>;
     updateEnhancementConfig: (config: {
-      enableStatic: boolean;
       enableLLM: boolean;
       enableCache: boolean;
       selectedModel?: string;

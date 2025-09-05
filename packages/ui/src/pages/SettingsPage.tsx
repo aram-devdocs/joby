@@ -20,13 +20,11 @@ export interface SettingsPageProps {
     models?: Array<string | { name: string; [key: string]: unknown }>;
   }>;
   onGetEnhancementConfig?: () => Promise<{
-    enableStatic: boolean;
     enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;
   }>;
   onUpdateEnhancementConfig?: (config: {
-    enableStatic: boolean;
     enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;
@@ -48,7 +46,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [connectionError, setConnectionError] = useState<string>('');
 
   // Form enhancement settings
-  const [enableStatic, setEnableStatic] = useState(true);
   const [enableLLM, setEnableLLM] = useState(false);
   const [enableCache, setEnableCache] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -58,7 +55,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     if (onGetEnhancementConfig) {
       onGetEnhancementConfig()
         .then((config) => {
-          setEnableStatic(config.enableStatic);
           setEnableLLM(config.enableLLM);
           setEnableCache(config.enableCache);
           if (config.selectedModel !== undefined) {
@@ -140,9 +136,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setHasUnsavedChanges(true);
 
     switch (setting) {
-      case 'enableStatic':
-        setEnableStatic(value as boolean);
-        break;
       case 'enableLLM':
         setEnableLLM(value as boolean);
         break;
@@ -160,7 +153,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
     try {
       await onUpdateEnhancementConfig({
-        enableStatic,
         enableLLM,
         enableCache,
         ...(selectedModel && { selectedModel }),
@@ -199,25 +191,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   const getEnhancementStatus = () => {
-    if (enableLLM && enableStatic) {
-      return (
-        <Badge variant="success" className="flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          Enhanced (Static + AI)
-        </Badge>
-      );
-    } else if (enableLLM && isConnected) {
+    if (enableLLM && isConnected) {
       return (
         <Badge variant="default" className="flex items-center gap-1">
           <Wifi className="h-3 w-3" />
           AI Enhanced
-        </Badge>
-      );
-    } else if (enableStatic) {
-      return (
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Settings className="h-3 w-3" />
-          Static Enhanced
         </Badge>
       );
     }
@@ -252,26 +230,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Static Enhancement */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={enableStatic}
-                  onChange={(e) =>
-                    handleSettingsChange('enableStatic', e.target.checked)
-                  }
-                  className="rounded"
-                />
-                <div>
-                  <span className="font-medium">Static Enhancement</span>
-                  <p className="text-sm text-gray-600">
-                    Pattern-based field detection using regex and heuristics
-                  </p>
-                </div>
-              </label>
-            </div>
-
             {/* Cache Settings */}
             <div className="space-y-3">
               <label className="flex items-center gap-3">

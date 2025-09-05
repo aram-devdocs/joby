@@ -11,7 +11,7 @@ export interface FieldEnhancement {
     message?: string;
   };
   confidence: number;
-  source: 'static' | 'llm' | 'cache' | 'hybrid';
+  source: 'llm' | 'cache' | 'hybrid';
   metadata?: Record<string, unknown>;
 }
 
@@ -65,7 +65,7 @@ export interface EnhancementCache {
 }
 
 export interface EnhancementConfig {
-  enableStatic?: boolean;
+  // enableStatic removed - pattern-based detection no longer supported
   enableLLM?: boolean;
   enableCache?: boolean;
   cacheConfig?: {

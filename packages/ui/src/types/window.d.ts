@@ -35,7 +35,6 @@ declare global {
           llmEnabled: boolean;
         }>;
         getEnhancementConfig: () => Promise<{
-          enableStatic?: boolean;
           enableLLM?: boolean;
           enableCache?: boolean;
         }>;

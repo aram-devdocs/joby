@@ -55,7 +55,6 @@ app.on('activate', () => {
 // Initialize persistent store
 const store = new Store<{
   enhancement: {
-    enableStatic: boolean;
     enableLLM: boolean;
     enableCache: boolean;
     selectedModel: string;
@@ -66,7 +65,6 @@ const store = new Store<{
 }>({
   defaults: {
     enhancement: {
-      enableStatic: true,
       enableLLM: false,
       enableCache: true,
       selectedModel: 'llama3.2',
@@ -180,7 +178,6 @@ ipcMain.handle(
   (
     _event,
     config: {
-      enableStatic: boolean;
       enableLLM: boolean;
       enableCache: boolean;
       selectedModel?: string;
@@ -191,7 +188,6 @@ ipcMain.handle(
 
     // Save to persistent storage
     (store as unknown as StoreType).set('enhancement', {
-      enableStatic: config.enableStatic,
       enableLLM: config.enableLLM,
       enableCache: config.enableCache,
       selectedModel: config.selectedModel || 'llama3.2',

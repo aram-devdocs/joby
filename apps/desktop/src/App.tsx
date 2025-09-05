@@ -137,11 +137,10 @@ export const App: React.FC = () => {
     if (window.electronAPI?.browser?.getEnhancementConfig) {
       return window.electronAPI.browser.getEnhancementConfig();
     }
-    return { enableStatic: true, enableLLM: false, enableCache: true };
+    return { enableLLM: false, enableCache: true };
   };
 
   const handleUpdateEnhancementConfig = async (config: {
-    enableStatic: boolean;
     enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;

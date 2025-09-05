@@ -91,9 +91,8 @@ export class FormAnalyzer {
   private enhancementService: FieldEnhancementService;
 
   constructor() {
-    // Initialize with static enhancement only (LLM disabled by default)
+    // Initialize with LLM enhancement disabled by default
     this.enhancementService = FieldEnhancementService.getInstance({
-      enableStatic: true,
       enableLLM: false,
       enableCache: true,
     });
@@ -679,50 +678,8 @@ export class FormAnalyzer {
     return attributes;
   }
 
-  detectJobApplicationFields(fields: FormField[]): Record<string, FormField[]> {
-    const categories: Record<string, FormField[]> = {
-      personal: [],
-      contact: [],
-      experience: [],
-      education: [],
-      documents: [],
-      other: [],
-    };
-
-    const patterns = {
-      personal: /name|first|last|middle|surname|given/i,
-      contact: /email|phone|address|city|state|zip|postal|country/i,
-      experience:
-        /experience|work|job|company|employer|position|title|role|years/i,
-      education: /education|school|university|degree|major|graduation|gpa/i,
-      documents: /resume|cv|cover|letter|portfolio|file|upload|attach/i,
-    };
-
-    for (const field of fields) {
-      let categorized = false;
-      const searchText = `${field.name || ''} ${field.label || ''} ${field.placeholder || ''}`;
-
-      for (const [category, pattern] of Object.entries(patterns)) {
-        if (pattern.test(searchText)) {
-          const categoryFields = categories[category];
-          if (categoryFields) {
-            categoryFields.push(field);
-            categorized = true;
-            break;
-          }
-        }
-      }
-
-      if (!categorized) {
-        const otherFields = categories.other;
-        if (otherFields) {
-          otherFields.push(field);
-        }
-      }
-    }
-
-    return categories;
-  }
+  // Removed pattern-based field detection - this is now handled by AI enhancement
+  // detectJobApplicationFields method has been removed
 
   private detectFieldSection(
     _$: cheerio.CheerioAPI,
@@ -797,11 +754,18 @@ export class FormAnalyzer {
       }
       summary += `  Fields: ${form.fields.length}\n`;
 
-      const categories = this.detectJobApplicationFields(form.fields);
-      for (const [category, fields] of Object.entries(categories)) {
-        if (fields.length > 0) {
-          summary += `    - ${category}: ${fields.length} field(s)\n`;
-        }
+      // Group fields by inputType for a simpler summary
+      const fieldsByType = form.fields.reduce(
+        (acc, field) => {
+          const type = field.inputType || 'text';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      for (const [type, count] of Object.entries(fieldsByType)) {
+        summary += `    - ${type}: ${count} field(s)\n`;
       }
       summary += '\n';
     });

@@ -28,7 +28,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getEnhancementConfig: () =>
       ipcRenderer.invoke('browser:getEnhancementConfig'),
     updateEnhancementConfig: (config: {
-      enableStatic: boolean;
       enableLLM: boolean;
       enableCache: boolean;
       selectedModel?: string;

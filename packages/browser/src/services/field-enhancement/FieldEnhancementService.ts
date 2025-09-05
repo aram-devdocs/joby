@@ -6,7 +6,6 @@ import type {
   EnhancementConfig,
 } from './types';
 import { SimpleMemoryCache } from './cache/SimpleMemoryCache';
-import { StaticEnhancer } from './enhancers/StaticEnhancer';
 import { LLMEnhancer } from './enhancers/LLMEnhancer';
 
 export class FieldEnhancementService {
@@ -17,7 +16,6 @@ export class FieldEnhancementService {
 
   constructor(config?: EnhancementConfig) {
     this.config = {
-      enableStatic: true,
       enableLLM: false,
       enableCache: true,
       cacheConfig: {
@@ -54,10 +52,6 @@ export class FieldEnhancementService {
   }
 
   private initializeEnhancers(): void {
-    if (this.config.enableStatic) {
-      this.registerEnhancer(new StaticEnhancer());
-    }
-
     if (this.config.enableLLM) {
       this.registerEnhancer(new LLMEnhancer(this.config.llmConfig));
     }
@@ -89,8 +83,9 @@ export class FieldEnhancementService {
       .map(async (enhancer) => {
         try {
           return await enhancer.enhance(context);
-        } catch (error) {
-          console.warn(`Enhancer ${enhancer.name} failed:`, error);
+        } catch {
+          // Silently catch errors from individual enhancers
+          // Enhancement will proceed with other enhancers
           return null;
         }
       });
@@ -152,10 +147,13 @@ export class FieldEnhancementService {
   }
 
   getConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' | 'none' {
-    const thresholds = this.config.confidenceThresholds!;
-    if (confidence >= thresholds.high!) return 'high';
-    if (confidence >= thresholds.medium!) return 'medium';
-    if (confidence >= thresholds.low!) return 'low';
+    const thresholds = this.config.confidenceThresholds;
+    if (!thresholds) return 'none';
+
+    const { high = 0.8, medium = 0.5, low = 0.3 } = thresholds;
+    if (confidence >= high) return 'high';
+    if (confidence >= medium) return 'medium';
+    if (confidence >= low) return 'low';
     return 'none';
   }
 
