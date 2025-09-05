@@ -40,7 +40,7 @@ jobs:
 
       - name: Verify quality checks
         run: |
-          pnpm turbo run check-types
+          pnpm turbo run typecheck
           pnpm turbo run lint
           pnpm turbo run test || echo "No tests found"
           pnpm turbo run build
