@@ -7,3 +7,5 @@ export * from './badge';
 export * from './skeleton';
 export * from './select';
 export * from './text-area';
+export * from './InteractiveFormInput';
+export * from './FieldStatusIndicator';

@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprehensive Form Test - All Input Types & Validations</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+      fieldset {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+      }
+      legend {
+        font-weight: bold;
+        color: #764ba2;
+        padding: 0 10px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      input:invalid {
+        border-color: #ff6b6b;
+      }
+      input:valid {
+        border-color: #51cf66;
+      }
+      .radio-group,
+      .checkbox-group {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .radio-item,
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .radio-item input,
+      .checkbox-item input {
+        width: auto;
+        margin: 0;
+      }
+      .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .required {
+        color: #ff6b6b;
+      }
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 600px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      #result {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        display: none;
+      }
+      .validation-message {
+        color: #ff6b6b;
+        font-size: 12px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a
+        href="/"
+        class="back-to-menu"
+        style="
+          display: inline-block;
+          margin-bottom: 20px;
+          padding: 10px 20px;
+          background: #667eea;
+          color: white;
+          text-decoration: none;
+          border-radius: 4px;
+          transition: background 0.3s ease;
+        "
+        >← Back to Test Menu</a
+      >
+      <h1>🧪 Comprehensive Form Test Suite</h1>
+      <p class="subtitle">
+        Testing all HTML5 input types, validations, and field combinations
+      </p>
+
+      <form id="comprehensiveForm" novalidate>
+        <!-- Personal Information Section -->
+        <fieldset>
+          <legend>👤 Personal Information</legend>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">
+                First Name <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                placeholder="John"
+                pattern="[A-Za-z]+"
+                required
+                minlength="2"
+                maxlength="50"
+              />
+              <div class="help-text">Letters only, 2-50 characters</div>
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">
+                Last Name <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                placeholder="Doe"
+                pattern="[A-Za-z]+"
+                required
+                minlength="2"
+                maxlength="50"
+              />
+              <div class="help-text">Letters only, 2-50 characters</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">
+              Email Address <span class="required">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="john.doe@example.com"
+              required
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+            />
+            <div class="help-text">Valid email format required</div>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">
+              Phone Number <span class="required">*</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="(555) 123-4567"
+              pattern="\(\d{3}\) \d{3}-\d{4}"
+              required
+            />
+            <div class="help-text">Format: (555) 123-4567</div>
+          </div>
+
+          <div class="form-group">
+            <label for="birthdate">
+              Date of Birth <span class="required">*</span>
+            </label>
+            <input
+              type="date"
+              id="birthdate"
+              name="birthdate"
+              min="1900-01-01"
+              max="2010-12-31"
+              required
+            />
+            <div class="help-text">Must be between 1900 and 2010</div>
+          </div>
+        </fieldset>
+
+        <!-- Account Settings Section -->
+        <fieldset>
+          <legend>🔐 Account Settings</legend>
+
+          <div class="form-group">
+            <label for="username">
+              Username <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="johndoe123"
+              pattern="[a-z0-9_]{3,16}"
+              minlength="3"
+              maxlength="16"
+              required
+              autocomplete="username"
+            />
+            <div class="help-text">
+              3-16 characters, lowercase letters, numbers, and underscores only
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              Password <span class="required">*</span>
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              minlength="8"
+              maxlength="128"
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              required
+              autocomplete="new-password"
+            />
+            <div class="help-text">
+              At least 8 characters, one uppercase, one lowercase, and one
+              number
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="website"> Personal Website </label>
+            <input
+              type="url"
+              id="website"
+              name="website"
+              placeholder="https://example.com"
+              pattern="https?://.+"
+            />
+            <div class="help-text">Optional: Include http:// or https://</div>
+          </div>
+        </fieldset>
+
+        <!-- Preferences Section -->
+        <fieldset>
+          <legend>⚙️ Preferences</legend>
+
+          <div class="form-group">
+            <label for="country">
+              Country <span class="required">*</span>
+            </label>
+            <select id="country" name="country" required>
+              <option value="">-- Select a country --</option>
+              <option value="us">United States</option>
+              <option value="ca">Canada</option>
+              <option value="uk">United Kingdom</option>
+              <option value="au">Australia</option>
+              <option value="de">Germany</option>
+              <option value="fr">France</option>
+              <option value="jp">Japan</option>
+              <option value="in">India</option>
+              <option value="br">Brazil</option>
+              <option value="mx">Mexico</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Notification Preferences</label>
+            <div class="radio-group">
+              <div class="radio-item">
+                <input
+                  type="radio"
+                  id="notify-all"
+                  name="notifications"
+                  value="all"
+                  required
+                />
+                <label for="notify-all">All notifications</label>
+              </div>
+              <div class="radio-item">
+                <input
+                  type="radio"
+                  id="notify-important"
+                  name="notifications"
+                  value="important"
+                />
+                <label for="notify-important">Important only</label>
+              </div>
+              <div class="radio-item">
+                <input
+                  type="radio"
+                  id="notify-none"
+                  name="notifications"
+                  value="none"
+                />
+                <label for="notify-none">No notifications</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Interests (select all that apply)</label>
+            <div class="checkbox-group">
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  id="tech"
+                  name="interests"
+                  value="technology"
+                />
+                <label for="tech">Technology</label>
+              </div>
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  id="sports"
+                  name="interests"
+                  value="sports"
+                />
+                <label for="sports">Sports</label>
+              </div>
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  id="music"
+                  name="interests"
+                  value="music"
+                />
+                <label for="music">Music</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="art" name="interests" value="art" />
+                <label for="art">Art</label>
+              </div>
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  id="travel"
+                  name="interests"
+                  value="travel"
+                />
+                <label for="travel">Travel</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="experience">
+              Years of Experience <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="experience"
+              name="experience"
+              min="0"
+              max="50"
+              step="1"
+              required
+            />
+            <div class="help-text">Between 0 and 50 years</div>
+          </div>
+
+          <div class="form-group">
+            <label for="salary"> Expected Salary </label>
+            <input
+              type="number"
+              id="salary"
+              name="salary"
+              min="0"
+              max="1000000"
+              step="1000"
+              placeholder="50000"
+            />
+            <div class="help-text">Optional: In USD, increments of $1,000</div>
+          </div>
+        </fieldset>
+
+        <!-- Additional Information Section -->
+        <fieldset>
+          <legend>📝 Additional Information</legend>
+
+          <div class="form-group">
+            <label for="bio"> Brief Bio </label>
+            <textarea
+              id="bio"
+              name="bio"
+              rows="4"
+              maxlength="500"
+              placeholder="Tell us about yourself..."
+            ></textarea>
+            <div class="help-text">Maximum 500 characters</div>
+          </div>
+
+          <div class="form-group">
+            <label for="startTime"> Preferred Start Time </label>
+            <input type="time" id="startTime" name="startTime" />
+          </div>
+
+          <div class="form-group">
+            <label for="meetingDate"> Preferred Meeting Date/Time </label>
+            <input type="datetime-local" id="meetingDate" name="meetingDate" />
+          </div>
+
+          <div class="form-group">
+            <label for="favoriteColor"> Favorite Color </label>
+            <input
+              type="color"
+              id="favoriteColor"
+              name="favoriteColor"
+              value="#667eea"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="satisfaction"> Satisfaction Level </label>
+            <input
+              type="range"
+              id="satisfaction"
+              name="satisfaction"
+              min="0"
+              max="100"
+              value="50"
+            />
+            <div class="help-text">Drag to adjust (0-100)</div>
+          </div>
+        </fieldset>
+
+        <!-- Terms and Conditions -->
+        <fieldset>
+          <legend>📜 Terms and Conditions</legend>
+
+          <div class="form-group">
+            <div class="checkbox-item">
+              <input type="checkbox" id="terms" name="terms" required />
+              <label for="terms">
+                I agree to the terms and conditions
+                <span class="required">*</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="checkbox-item">
+              <input type="checkbox" id="newsletter" name="newsletter" />
+              <label for="newsletter">
+                Subscribe to our newsletter (optional)
+              </label>
+            </div>
+          </div>
+        </fieldset>
+
+        <button type="submit">Submit Form</button>
+      </form>
+
+      <div id="result"></div>
+    </div>
+
+    <script>
+      // Form validation and submission handler
+      document
+        .getElementById('comprehensiveForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          const data = {};
+
+          // Collect all form data
+          for (let [key, value] of formData.entries()) {
+            if (data[key]) {
+              // Handle multiple values (checkboxes)
+              if (!Array.isArray(data[key])) {
+                data[key] = [data[key]];
+              }
+              data[key].push(value);
+            } else {
+              data[key] = value;
+            }
+          }
+
+          // Display results
+          const result = document.getElementById('result');
+          result.style.display = 'block';
+          result.innerHTML =
+            '<h3>✅ Form Submitted Successfully!</h3>' +
+            '<p><strong>Submitted Data:</strong></p>' +
+            '<pre>' +
+            JSON.stringify(data, null, 2) +
+            '</pre>';
+
+          // Scroll to result
+          result.scrollIntoView({ behavior: 'smooth' });
+        });
+
+      // Real-time phone number formatting
+      document.getElementById('phone').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        let formattedValue = '';
+
+        if (value.length > 0) {
+          if (value.length <= 3) {
+            formattedValue = `(${value}`;
+          } else if (value.length <= 6) {
+            formattedValue = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+          } else {
+            formattedValue = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+          }
+        }
+
+        e.target.value = formattedValue;
+      });
+
+      // Show range value
+      document
+        .getElementById('satisfaction')
+        .addEventListener('input', function (e) {
+          const helpText = e.target.nextElementSibling;
+          if (helpText) {
+            helpText.textContent = `Current value: ${e.target.value}`;
+          }
+        });
+
+      // Custom validation messages
+      document.querySelectorAll('input, select, textarea').forEach((field) => {
+        field.addEventListener('invalid', function (e) {
+          e.preventDefault();
+          if (!e.target.validity.valid) {
+            let message = e.target.parentElement.querySelector(
+              '.validation-message',
+            );
+            if (!message) {
+              message = document.createElement('div');
+              message.className = 'validation-message';
+              e.target.parentElement.appendChild(message);
+            }
+
+            if (e.target.validity.valueMissing) {
+              message.textContent = 'This field is required';
+            } else if (e.target.validity.patternMismatch) {
+              message.textContent = 'Please match the requested format';
+            } else if (e.target.validity.tooShort) {
+              message.textContent = `Minimum length is ${e.target.minLength} characters`;
+            } else if (e.target.validity.tooLong) {
+              message.textContent = `Maximum length is ${e.target.maxLength} characters`;
+            } else if (e.target.validity.rangeUnderflow) {
+              message.textContent = `Minimum value is ${e.target.min}`;
+            } else if (e.target.validity.rangeOverflow) {
+              message.textContent = `Maximum value is ${e.target.max}`;
+            } else if (e.target.validity.typeMismatch) {
+              message.textContent = `Please enter a valid ${e.target.type}`;
+            }
+          }
+        });
+
+        field.addEventListener('input', function (e) {
+          const message = e.target.parentElement.querySelector(
+            '.validation-message',
+          );
+          if (message && e.target.validity.valid) {
+            message.remove();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

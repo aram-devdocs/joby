@@ -2,12 +2,10 @@
 export * from './atoms';
 
 // Molecules - Compound components
-export { HelloWorld } from './molecules/HelloWorld';
-export type { HelloWorldProps } from './molecules/HelloWorld';
-export { OllamaChat } from './molecules/OllamaChat';
-export type { OllamaChatProps } from './molecules/OllamaChat';
+export * from './molecules';
 
 // Organisms - Complex components
+export { InteractiveFormPanel } from './organisms/InteractiveFormPanel';
 export { SplitPanel } from './organisms/layout/SplitPanel';
 export { Sidebar } from './organisms/layout/Sidebar';
 export type { SidebarItem } from './organisms/layout/Sidebar';
@@ -25,6 +23,12 @@ export * from './features/browser';
 
 // Theme and Design System
 export * from './theme/tokens';
+
+// Hooks - Custom React hooks
+export * from './hooks';
+
+// Types
+export * from './types/form';
 
 // Utils
 export { cn } from './lib/utils';

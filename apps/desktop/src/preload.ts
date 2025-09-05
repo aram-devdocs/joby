@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { FormField, TypingOptions } from './types/form';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
@@ -24,5 +25,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.send('browser:navigationStart', url),
     onNavigationComplete: (url: string, title?: string) =>
       ipcRenderer.send('browser:navigationComplete', url, title),
+  },
+  form: {
+    updateField: (field: FormField, value: string, options?: TypingOptions) =>
+      ipcRenderer.invoke('form:updateField', field, value, options),
+    focusField: (field: FormField) =>
+      ipcRenderer.invoke('form:focusField', field),
+    getFieldValue: (field: FormField) =>
+      ipcRenderer.invoke('form:getFieldValue', field),
+    monitorFields: (fields: FormField[]) =>
+      ipcRenderer.invoke('form:monitorFields', fields),
   },
 });

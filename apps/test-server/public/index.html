@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joby Test Forms Menu</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+      }
+      .menu {
+        display: grid;
+        gap: 15px;
+      }
+      .menu-item {
+        display: block;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+      }
+      .menu-item:hover {
+        background: #667eea;
+        color: white;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+      .menu-item h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+      }
+      .menu-item p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+      .status {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #28a745;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 20px;
+      }
+      .info {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f0f8ff;
+        border-left: 4px solid #667eea;
+        border-radius: 4px;
+      }
+      .info h4 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+      }
+      .info p {
+        margin: 5px 0;
+        color: #555;
+        font-size: 14px;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Joby Form Testing Suite</h1>
+      <p class="subtitle">Test the interactive form field editing feature</p>
+
+      <div class="menu">
+        <a href="/basic-form.html" class="menu-item">
+          <h3>📝 Job Application Form</h3>
+          <p>
+            Complete job application with multiple sections, various field types
+            including text, email, select, and textarea
+          </p>
+        </a>
+
+        <a href="/simple-form.html" class="menu-item">
+          <h3>⚡ Simple Form</h3>
+          <p>
+            Basic form with username, email, and message fields - perfect for
+            quick testing
+          </p>
+        </a>
+
+        <a href="/comprehensive-form.html" class="menu-item">
+          <h3>🎯 Comprehensive Form Test</h3>
+          <p>
+            All HTML5 input types with validation: email, tel, url, number,
+            date, select, radio, checkbox, and more with pattern matching &
+            constraints
+          </p>
+        </a>
+
+        <a
+          href="https://www.google.com/search"
+          class="menu-item"
+          target="_blank"
+        >
+          <h3>🔍 Google Search (External)</h3>
+          <p>Test with real-world form - Google's search input</p>
+        </a>
+      </div>
+
+      <span class="status">Server running on port 3001</span>
+
+      <div class="info">
+        <h4>📖 How to Test</h4>
+        <p>1. Navigate to one of the test forms using the Joby browser</p>
+        <p>
+          2. Look for the <strong>Interactive Form Fields</strong> panel on the
+          right
+        </p>
+        <p>3. Click <strong>"Edit"</strong> on any detected field</p>
+        <p>4. Type a new value in the input</p>
+        <p>5. Click <strong>"Sync Now"</strong> to update the browser field</p>
+        <p>6. Open DevTools (F12) to see debug logs</p>
+      </div>
+
+      <div class="info" style="background: #fff3cd; border-color: #ffc107">
+        <h4>🐛 Debug Info</h4>
+        <p>Console logs are enabled with prefixes:</p>
+        <p><code>[FormFieldEditor]</code> - When sync button is clicked</p>
+        <p><code>[InteractiveFormPanel]</code> - When sync handler is called</p>
+        <p><code>[syncField]</code> - Detailed sync process information</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Field Validation Test</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+      }
+      .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #555;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+      input[type='checkbox'],
+      input[type='radio'] {
+        width: auto;
+        margin-right: 5px;
+      }
+      input[type='range'] {
+        padding: 0;
+      }
+      input[type='color'] {
+        height: 40px;
+        cursor: pointer;
+      }
+      .radio-group,
+      .checkbox-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+      .radio-item,
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+      }
+      .required {
+        color: #dc3545;
+      }
+      .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .test-status {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: #28a745;
+        color: white;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-status">Testing Form Validation</div>
+    <h1>Form Field Validation Test Suite</h1>
+
+    <form id="testForm">
+      <!-- Text Input Fields Section -->
+      <div class="form-section">
+        <h2>Text Input Fields</h2>
+
+        <div class="form-group">
+          <label for="fullName"
+            >Full Name <span class="required">*</span></label
+          >
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            required
+            placeholder="Enter your full name"
+          />
+          <div class="help-text">Required text field</div>
+        </div>
+
+        <div class="form-group">
+          <label for="email"
+            >Email Address <span class="required">*</span></label
+          >
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="user@example.com"
+          />
+          <div class="help-text">Must be a valid email format</div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone"
+            >Phone Number <span class="required">*</span></label
+          >
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            placeholder="(555) 123-4567"
+            pattern="[0-9() -]*"
+          />
+          <div class="help-text">10-digit US phone number only</div>
+        </div>
+
+        <div class="form-group">
+          <label for="website">Website URL</label>
+          <input
+            type="url"
+            id="website"
+            name="website"
+            placeholder="https://example.com"
+          />
+          <div class="help-text">Optional URL field</div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            minlength="8"
+            placeholder="Min 8 characters"
+          />
+          <div class="help-text">Minimum 8 characters required</div>
+        </div>
+
+        <div class="form-group">
+          <label for="search">Search Query</label>
+          <input
+            type="search"
+            id="search"
+            name="search"
+            placeholder="Search for something..."
+          />
+          <div class="help-text">Search input type</div>
+        </div>
+      </div>
+
+      <!-- Date and Time Fields Section -->
+      <div class="form-section">
+        <h2>Date and Time Fields</h2>
+
+        <div class="form-group">
+          <label for="birthDate"
+            >Birth Date <span class="required">*</span></label
+          >
+          <input
+            type="date"
+            id="birthDate"
+            name="birthDate"
+            required
+            max="2010-01-01"
+          />
+          <div class="help-text">Must be before 2010</div>
+        </div>
+
+        <div class="form-group">
+          <label for="appointmentDateTime">Appointment Date & Time</label>
+          <input
+            type="datetime-local"
+            id="appointmentDateTime"
+            name="appointmentDateTime"
+          />
+          <div class="help-text">Date and time picker</div>
+        </div>
+
+        <div class="form-group">
+          <label for="appointmentTime">Preferred Time</label>
+          <input type="time" id="appointmentTime" name="appointmentTime" />
+          <div class="help-text">Time only picker</div>
+        </div>
+
+        <div class="form-group">
+          <label for="birthMonth">Birth Month</label>
+          <input type="month" id="birthMonth" name="birthMonth" />
+          <div class="help-text">Month and year picker</div>
+        </div>
+
+        <div class="form-group">
+          <label for="weekSelection">Select Week</label>
+          <input type="week" id="weekSelection" name="weekSelection" />
+          <div class="help-text">Week picker</div>
+        </div>
+      </div>
+
+      <!-- Number and Range Fields Section -->
+      <div class="form-section">
+        <h2>Number and Range Fields</h2>
+
+        <div class="form-group">
+          <label for="age">Age <span class="required">*</span></label>
+          <input
+            type="number"
+            id="age"
+            name="age"
+            required
+            min="18"
+            max="120"
+            step="1"
+            placeholder="18-120"
+          />
+          <div class="help-text">Must be between 18 and 120</div>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Quantity</label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            min="1"
+            max="100"
+            step="1"
+            value="1"
+          />
+          <div class="help-text">1 to 100 items</div>
+        </div>
+
+        <div class="form-group">
+          <label for="price">Price</label>
+          <input
+            type="number"
+            id="price"
+            name="price"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+          />
+          <div class="help-text">Decimal number input</div>
+        </div>
+
+        <div class="form-group">
+          <label for="volume">Volume: <span id="volumeValue">50</span></label>
+          <input
+            type="range"
+            id="volume"
+            name="volume"
+            min="0"
+            max="100"
+            value="50"
+            oninput="document.getElementById('volumeValue').textContent = this.value"
+          />
+          <div class="help-text">Range slider (0-100)</div>
+        </div>
+
+        <div class="form-group">
+          <label for="brightness"
+            >Brightness: <span id="brightnessValue">75</span>%</label
+          >
+          <input
+            type="range"
+            id="brightness"
+            name="brightness"
+            min="0"
+            max="100"
+            step="5"
+            value="75"
+            oninput="document.getElementById('brightnessValue').textContent = this.value"
+          />
+          <div class="help-text">Range with 5% steps</div>
+        </div>
+      </div>
+
+      <!-- Selection Fields Section -->
+      <div class="form-section">
+        <h2>Selection Fields</h2>
+
+        <div class="form-group">
+          <label for="country">Country <span class="required">*</span></label>
+          <select id="country" name="country" required>
+            <option value="">-- Select Country --</option>
+            <option value="us">United States</option>
+            <option value="ca">Canada</option>
+            <option value="uk">United Kingdom</option>
+            <option value="au">Australia</option>
+            <option value="de">Germany</option>
+            <option value="fr">France</option>
+            <option value="jp">Japan</option>
+          </select>
+          <div class="help-text">Required dropdown selection</div>
+        </div>
+
+        <div class="form-group">
+          <label for="skills">Skills (Multiple Selection)</label>
+          <select id="skills" name="skills" multiple size="5">
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="react">React</option>
+            <option value="nodejs">Node.js</option>
+            <option value="python">Python</option>
+          </select>
+          <div class="help-text">Hold Ctrl/Cmd to select multiple</div>
+        </div>
+
+        <div class="form-group">
+          <label>Gender <span class="required">*</span></label>
+          <div class="radio-group">
+            <div class="radio-item">
+              <input
+                type="radio"
+                id="male"
+                name="gender"
+                value="male"
+                required
+              />
+              <label for="male">Male</label>
+            </div>
+            <div class="radio-item">
+              <input
+                type="radio"
+                id="female"
+                name="gender"
+                value="female"
+                required
+              />
+              <label for="female">Female</label>
+            </div>
+            <div class="radio-item">
+              <input
+                type="radio"
+                id="other"
+                name="gender"
+                value="other"
+                required
+              />
+              <label for="other">Other</label>
+            </div>
+            <div class="radio-item">
+              <input
+                type="radio"
+                id="preferNotToSay"
+                name="gender"
+                value="prefer-not-to-say"
+                required
+              />
+              <label for="preferNotToSay">Prefer not to say</label>
+            </div>
+          </div>
+          <div class="help-text">Required radio selection</div>
+        </div>
+
+        <div class="form-group">
+          <label>Interests</label>
+          <div class="checkbox-group">
+            <div class="checkbox-item">
+              <input
+                type="checkbox"
+                id="sports"
+                name="interests"
+                value="sports"
+              />
+              <label for="sports">Sports</label>
+            </div>
+            <div class="checkbox-item">
+              <input
+                type="checkbox"
+                id="music"
+                name="interests"
+                value="music"
+              />
+              <label for="music">Music</label>
+            </div>
+            <div class="checkbox-item">
+              <input
+                type="checkbox"
+                id="reading"
+                name="interests"
+                value="reading"
+              />
+              <label for="reading">Reading</label>
+            </div>
+            <div class="checkbox-item">
+              <input
+                type="checkbox"
+                id="travel"
+                name="interests"
+                value="travel"
+              />
+              <label for="travel">Travel</label>
+            </div>
+          </div>
+          <div class="help-text">Select all that apply</div>
+        </div>
+
+        <div class="form-group">
+          <label for="favoriteColor">Favorite Color</label>
+          <input
+            type="color"
+            id="favoriteColor"
+            name="favoriteColor"
+            value="#007bff"
+          />
+          <div class="help-text">Color picker input</div>
+        </div>
+      </div>
+
+      <!-- Text Area Section -->
+      <div class="form-section">
+        <h2>Text Area</h2>
+
+        <div class="form-group">
+          <label for="bio">Biography</label>
+          <textarea
+            id="bio"
+            name="bio"
+            rows="4"
+            placeholder="Tell us about yourself..."
+            maxlength="500"
+          ></textarea>
+          <div class="help-text">Maximum 500 characters</div>
+        </div>
+
+        <div class="form-group">
+          <label for="comments"
+            >Additional Comments <span class="required">*</span></label
+          >
+          <textarea
+            id="comments"
+            name="comments"
+            rows="3"
+            required
+            placeholder="Required field"
+          ></textarea>
+          <div class="help-text">This field is required</div>
+        </div>
+      </div>
+
+      <!-- Agreement and Submit -->
+      <div class="form-section">
+        <div class="form-group">
+          <div class="checkbox-item">
+            <input type="checkbox" id="agree" name="agree" required />
+            <label for="agree"
+              >I agree to the terms and conditions
+              <span class="required">*</span></label
+            >
+          </div>
+        </div>
+
+        <button type="submit">Submit Form</button>
+      </div>
+    </form>
+
+    <script>
+      // Form validation test script
+      document
+        .getElementById('testForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault();
+          alert('Form validation passed! All fields are working correctly.');
+          console.log('Form Data:', new FormData(this));
+        });
+
+      // Test phone number formatting
+      document.getElementById('phone').addEventListener('input', function (e) {
+        // Only allow numeric input
+        let value = e.target.value.replace(/\D/g, '');
+
+        // Format as US phone number
+        if (value.length <= 3) {
+          e.target.value = value;
+        } else if (value.length <= 6) {
+          e.target.value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+        } else if (value.length <= 10) {
+          e.target.value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+        } else {
+          // Limit to 10 digits
+          value = value.slice(0, 10);
+          e.target.value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+        }
+      });
+
+      // Test email validation
+      document.getElementById('email').addEventListener('blur', function (e) {
+        const emailRegex =
+          /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        if (!emailRegex.test(e.target.value) && e.target.value) {
+          e.target.style.borderColor = '#dc3545';
+          console.log('Invalid email format');
+        } else {
+          e.target.style.borderColor = '#28a745';
+        }
+      });
+    </script>
+  </body>
+</html>

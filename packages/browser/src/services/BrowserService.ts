@@ -30,15 +30,52 @@ export interface FormInfo {
   fields: FormField[];
 }
 
+export interface FormSelectOption {
+  value: string;
+  label: string;
+  selected?: boolean;
+}
+
 export interface FormField {
   id?: string;
   name?: string;
   type: string;
+  inputType?:
+    | 'text'
+    | 'email'
+    | 'tel'
+    | 'url'
+    | 'number'
+    | 'date'
+    | 'password'
+    | 'select'
+    | 'radio'
+    | 'checkbox'
+    | 'textarea'
+    | 'range'
+    | 'color'
+    | 'search';
   label?: string;
   placeholder?: string;
   required: boolean;
   value?: string;
-  options?: string[];
+  options?: FormSelectOption[] | string[];
+  // Enhanced field targeting
+  selector?: string; // CSS selector for precise field targeting
+  xpath?: string; // XPath as fallback
+  position?: { x: number; y: number; width: number; height: number }; // Visual position
+  attributes?: Record<string, string>; // Additional attributes for identification
+  section?: string; // Section/group this field belongs to
+  // HTML5 validation attributes
+  pattern?: string;
+  minLength?: number;
+  maxLength?: number;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
+  multiple?: boolean;
+  checked?: boolean;
+  autocomplete?: string;
 }
 
 export class BrowserService extends EventEmitter {
