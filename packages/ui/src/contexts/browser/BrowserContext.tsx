@@ -88,7 +88,13 @@ export function BrowserProvider({
 
   const syncField = useCallback(
     async (fieldId: string) => {
-      const field = interactiveFields.get(fieldId);
+      // Get current field state to avoid stale closures
+      let field: InteractiveFormField | undefined;
+      setInteractiveFields((prev) => {
+        field = prev.get(fieldId);
+        return prev;
+      });
+
       if (!field || !browserAPI?.executeScript) {
         return;
       }
@@ -97,7 +103,12 @@ export function BrowserProvider({
         return;
       }
 
-      // Set syncing status
+      // Only sync if the value has actually changed
+      if (field.uiValue === field.browserValue) {
+        return;
+      }
+
+      // Set syncing status immediately
       setInteractiveFields((prev) => {
         const newMap = new Map(prev);
         const f = newMap.get(fieldId);
@@ -108,29 +119,54 @@ export function BrowserProvider({
       });
 
       try {
-        // Check if electronAPI is available
-        if (typeof window !== 'undefined' && window.electronAPI) {
-          // Get the update script from the backend
-          const { script } = await window.electronAPI.form.updateField(
-            field,
-            field.uiValue,
+        // Check if window.electronAPI is available (in Electron context)
+        if (
+          typeof window !== 'undefined' &&
+          window.electronAPI?.form?.updateField
+        ) {
+          // Convert InteractiveFormField to FormField format for IPC
+          const formField: FormField = {
+            type: field.type,
+            required: field.required || false,
+            ...(field.id && { id: field.id }),
+            ...(field.name && { name: field.name }),
+            ...(field.label && { label: field.label }),
+            ...(field.placeholder && { placeholder: field.placeholder }),
+            ...(field.value && { value: field.value }),
+            ...(field.selector && { selector: field.selector }),
+            ...(field.xpath && { xpath: field.xpath }),
+            ...(field.position && { position: field.position }),
+            ...(field.attributes && { attributes: field.attributes }),
+          };
+
+          // Use the FormInteractionService through IPC for better typing simulation
+          const result = await window.electronAPI.form.updateField(
+            formField,
+            field.uiValue || '',
+            {
+              minDelay: 50,
+              maxDelay: 150,
+              clearFirst: true,
+              simulateFocus: true,
+              simulateBlur: true,
+            },
           );
 
-          // Execute the script in the webview
-          await browserAPI.executeScript(script);
+          // Execute the generated script from FormInteractionService
+          if (result.script) {
+            await browserAPI.executeScript(result.script);
+          }
         } else {
-          // Fallback: generate script directly (for testing)
+          // Fallback to direct script execution if electronAPI is not available
           const script = `
             (function() {
-              const element = document.querySelector('${field.selector}');
-              if (element) {
-                element.value = ${JSON.stringify(field.uiValue)};
-                element.dispatchEvent(new Event('input', { bubbles: true }));
-                element.dispatchEvent(new Event('change', { bubbles: true }));
-                return { success: true, value: element.value };
+              const field = document.querySelector('${field.selector}');
+              if (field) {
+                field.value = '${(field.uiValue || '').replace(/'/g, "\\'")}';
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
               }
-              return { success: false, error: 'Element not found' };
-            })()
+            })();
           `;
           await browserAPI.executeScript(script);
         }
@@ -150,7 +186,7 @@ export function BrowserProvider({
           return newMap;
         });
 
-        // Reset sync status after a delay
+        // Reset sync status after a longer delay for better visual feedback
         setTimeout(() => {
           setInteractiveFields((prev) => {
             const newMap = new Map(prev);
@@ -160,7 +196,7 @@ export function BrowserProvider({
             }
             return newMap;
           });
-        }, 2000);
+        }, 3000);
       } catch {
         // Set error status
         setInteractiveFields((prev) => {
@@ -171,19 +207,41 @@ export function BrowserProvider({
           }
           return newMap;
         });
-        // Failed to sync field
+
+        // Reset error status after delay
+        setTimeout(() => {
+          setInteractiveFields((prev) => {
+            const newMap = new Map(prev);
+            const f = newMap.get(fieldId);
+            if (f && f.syncStatus === 'error') {
+              newMap.set(fieldId, { ...f, syncStatus: 'idle' });
+            }
+            return newMap;
+          });
+        }, 3000);
       }
     },
-    [interactiveFields, browserAPI],
+    [browserAPI],
   );
 
   const syncAllFields = useCallback(async () => {
-    const fieldsToSync = Array.from(interactiveFields.entries()).filter(
-      ([_, field]) => field.isEditing && field.uiValue !== field.browserValue,
-    );
+    // Get the latest state to avoid stale closures
+    let fieldsToSync: Array<[string, InteractiveFormField]> = [];
 
-    await Promise.all(fieldsToSync.map(([fieldId]) => syncField(fieldId)));
-  }, [interactiveFields, syncField]);
+    setInteractiveFields((prev) => {
+      fieldsToSync = Array.from(prev.entries()).filter(
+        ([_, field]) => field.uiValue && field.uiValue !== field.browserValue,
+      );
+      return prev;
+    });
+
+    // Sync fields sequentially with small delays to avoid overwhelming the page
+    for (const [fieldId] of fieldsToSync) {
+      await syncField(fieldId);
+      // Small delay between syncs
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }, [syncField]);
 
   const value: BrowserContextValue = {
     detectedForms,

@@ -44,6 +44,7 @@ export interface FormField {
   xpath?: string; // XPath as fallback
   position?: { x: number; y: number; width: number; height: number }; // Visual position
   attributes?: Record<string, string>; // Additional attributes for identification
+  section?: string; // Section/group this field belongs to
 }
 
 export class BrowserService extends EventEmitter {

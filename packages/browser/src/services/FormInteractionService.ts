@@ -85,11 +85,31 @@ export class FormInteractionService extends EventEmitter {
             ).set;
             nativeInputValueSetter.call(el, el.value + char);
             
-            // Dispatch input event
-            dispatchEvent(el, 'input', {
-              data: char,
-              inputType: 'insertText'
+            // Dispatch input event with enhanced React compatibility
+            const inputEvent = new Event('input', {
+              bubbles: true,
+              cancelable: true
             });
+            
+            // Add properties that React expects
+            Object.defineProperty(inputEvent, 'target', {
+              value: el,
+              enumerable: true
+            });
+            Object.defineProperty(inputEvent, 'currentTarget', {
+              value: el,
+              enumerable: true
+            });
+            Object.defineProperty(inputEvent, 'data', {
+              value: char,
+              enumerable: true
+            });
+            Object.defineProperty(inputEvent, 'inputType', {
+              value: 'insertText',
+              enumerable: true
+            });
+            
+            el.dispatchEvent(inputEvent);
             
             // Dispatch keyup
             dispatchKeyEvent(el, 'keyup', char);
@@ -122,8 +142,33 @@ export class FormInteractionService extends EventEmitter {
           
           // Delete selected text
           dispatchKeyEvent(element, 'keydown', 'Delete');
-          element.value = '';
-          dispatchEvent(element, 'input', { inputType: 'deleteContentBackward' });
+          
+          // Use native setter for React compatibility
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            'value'
+          ).set;
+          nativeInputValueSetter.call(element, '');
+          
+          // Dispatch input event with React-compatible properties
+          const inputEvent = new Event('input', {
+            bubbles: true,
+            cancelable: true
+          });
+          Object.defineProperty(inputEvent, 'target', {
+            value: element,
+            enumerable: true
+          });
+          Object.defineProperty(inputEvent, 'currentTarget', {
+            value: element,
+            enumerable: true
+          });
+          Object.defineProperty(inputEvent, 'inputType', {
+            value: 'deleteContentBackward',
+            enumerable: true
+          });
+          element.dispatchEvent(inputEvent);
+          
           dispatchKeyEvent(element, 'keyup', 'Delete');
           await new Promise(resolve => setTimeout(resolve, 100));
         }

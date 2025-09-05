@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Badge, Card, CardHeader, CardTitle } from '../../atoms';
 import { Globe, CheckCircle, Loader2 } from 'lucide-react';
 import {
@@ -43,24 +43,27 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [jobSite, setJobSite] = useState<string | null>(null);
 
+  // Create a stable executeScript function
+  const executeScript = useCallback(async (script: string) => {
+    const currentWebview = webviewRef.current;
+    if (!currentWebview) throw new Error('Webview not available');
+    return currentWebview.executeJavaScript(script);
+  }, []);
+
   // Set up the executeScript function once when webview is ready
   useEffect(() => {
     const webview = webviewRef.current;
     if (!webview) return;
 
-    // Create executeScript function for the browser API
-    const executeScript = async (script: string) => {
-      const currentWebview = webviewRef.current;
-      if (!currentWebview) throw new Error('Webview not available');
-      return currentWebview.executeJavaScript(script);
-    };
-
-    // Update browser API with executeScript
-    const newBrowserAPI: BrowserAPI = browserAPI?.detectJobSite
-      ? { detectJobSite: browserAPI.detectJobSite, executeScript }
-      : { executeScript };
-    setBrowserAPI(newBrowserAPI);
-  }, [setBrowserAPI, browserAPI?.detectJobSite]); // Only re-run if these change
+    // Only update if executeScript is missing from the API
+    if (!browserAPI?.executeScript) {
+      const newBrowserAPI: BrowserAPI = {
+        ...browserAPI,
+        executeScript,
+      };
+      setBrowserAPI(newBrowserAPI);
+    }
+  }, [setBrowserAPI, executeScript, browserAPI]); // Only re-run if executeScript function changes
 
   // Set up webview event handlers
   useEffect(() => {
@@ -325,7 +328,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           }}
           partition="persist:joby"
           webpreferences="contextIsolation=yes,nodeIntegration=no"
-          allowpopups={true}
+          allowpopups
         />
       </div>
     </div>

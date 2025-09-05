@@ -11,6 +11,7 @@ export interface FormField {
   xpath?: string;
   position?: { x: number; y: number; width: number; height: number };
   attributes?: Record<string, string>;
+  section?: string; // Section/group this field belongs to
 }
 
 export interface InteractiveFormField extends FormField {

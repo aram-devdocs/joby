@@ -1,6 +1,29 @@
 // Type definitions for Electron's webview element
 // These types are used in the BrowserView component
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      webview: React.DetailedHTMLProps<WebviewHTMLAttributes, WebviewElement>;
+    }
+  }
+}
+
+export interface WebviewHTMLAttributes
+  extends React.HTMLAttributes<WebviewElement> {
+  src?: string;
+  partition?: string;
+  allowpopups?: string;
+  webpreferences?: string;
+  httpreferrer?: string;
+  useragent?: string;
+  nodeintegration?: string;
+  nodeintegrationinsubframes?: string;
+  plugins?: string;
+  preload?: string;
+  enableremotemodule?: string;
+}
+
 export interface WebviewElement extends HTMLElement {
   // Properties
   src: string;

@@ -72,11 +72,15 @@ export class FormAnalyzer {
       return null;
     }
 
+    // Detect section from HTML structure
+    const section = this.detectFieldSection($, $field);
+
     const field: FormField = {
       id: $field.attr('id') ?? '',
       name: $field.attr('name') ?? '',
       type,
       placeholder: $field.attr('placeholder') ?? '',
+      ...(section && { section }),
       required:
         $field.attr('required') !== undefined ||
         $field.attr('aria-required') === 'true',
@@ -232,6 +236,62 @@ export class FormAnalyzer {
     }
 
     return categories;
+  }
+
+  private detectFieldSection(
+    _$: cheerio.CheerioAPI,
+    $field: cheerio.Cheerio<AnyNode>,
+  ): string | undefined {
+    // Strategy 1: Look for fieldset with legend
+    const $fieldset = $field.closest('fieldset');
+    if ($fieldset.length > 0) {
+      const legend = $fieldset.find('legend').first().text().trim();
+      if (legend) return legend;
+    }
+
+    // Strategy 2: Look for section headings by traversing up the DOM
+    let $current = $field;
+    let maxLevels = 10;
+
+    while ($current.length > 0 && maxLevels > 0) {
+      // Look for any preceding heading at the same level
+      const $prevHeading = $current.prevAll('h1, h2, h3, h4, h5, h6').first();
+      if ($prevHeading.length > 0) {
+        const heading = $prevHeading.text().trim();
+        if (heading && heading.length < 50) {
+          // Reasonable heading length
+          return heading;
+        }
+      }
+
+      // Check parent's previous siblings for headings
+      const $parent = $current.parent();
+      if ($parent.length > 0) {
+        const $parentPrevHeading = $parent
+          .prevAll('h1, h2, h3, h4, h5, h6')
+          .first();
+        if ($parentPrevHeading.length > 0) {
+          const heading = $parentPrevHeading.text().trim();
+          if (heading && heading.length < 50) {
+            return heading;
+          }
+        }
+
+        // Check if parent has a heading as first child (common pattern)
+        const $firstChild = $parent.children().first();
+        if ($firstChild.is('h1, h2, h3, h4, h5, h6')) {
+          const heading = $firstChild.text().trim();
+          if (heading && heading.length < 50) {
+            return heading;
+          }
+        }
+      }
+
+      $current = $parent;
+      maxLevels--;
+    }
+
+    return undefined;
   }
 
   generateFormSummary(forms: FormInfo[]): string {

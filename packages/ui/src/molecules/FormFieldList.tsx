@@ -37,36 +37,43 @@ export const FormFieldList: React.FC<FormFieldListProps> = ({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {(editingCount > 0 || syncingCount > 0) && (
-        <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
-          <div className="text-sm">
-            {editingCount > 0 && (
-              <span className="text-blue-700">
-                {editingCount} field{editingCount !== 1 ? 's' : ''} being edited
-              </span>
-            )}
-            {editingCount > 0 && syncingCount > 0 && (
-              <span className="mx-2 text-blue-500">•</span>
-            )}
-            {syncingCount > 0 && (
-              <span className="text-yellow-700">
-                {syncingCount} field{syncingCount !== 1 ? 's' : ''} syncing
-              </span>
+    <div className={`${className}`}>
+      {(editingCount > 0 || syncingCount > 0 || hasUnsyncedChanges) && (
+        <div className="sticky top-0 z-10 mb-3 rounded-lg border border-blue-200 bg-blue-50 p-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-xs">
+              {editingCount > 0 && (
+                <span className="flex items-center gap-1 text-blue-700">
+                  <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                  {editingCount} editing
+                </span>
+              )}
+              {syncingCount > 0 && (
+                <span className="flex items-center gap-1 text-yellow-700">
+                  <span className="h-2 w-2 rounded-full bg-yellow-600 animate-pulse"></span>
+                  {syncingCount} syncing
+                </span>
+              )}
+              {hasUnsyncedChanges && !syncingCount && (
+                <span className="flex items-center gap-1 text-orange-700">
+                  <span className="h-2 w-2 rounded-full bg-orange-600"></span>
+                  Changes pending
+                </span>
+              )}
+            </div>
+            {hasUnsyncedChanges && onSyncAll && (
+              <button
+                onClick={onSyncAll}
+                className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                Sync All
+              </button>
             )}
           </div>
-          {hasUnsyncedChanges && onSyncAll && (
-            <button
-              onClick={onSyncAll}
-              className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Sync All Changes
-            </button>
-          )}
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {fields.map((field, index) => {
           const key = field.id || field.name || `field-${index}`;
           return (
