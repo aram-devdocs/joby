@@ -199,8 +199,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
             onFormDetected(forms);
           }
         }
-      } catch (error) {
-        console.error('Error analyzing forms:', error);
+      } catch {
         // If analysis fails, still continue normal page load
       }
     };

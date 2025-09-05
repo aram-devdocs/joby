@@ -17,7 +17,31 @@ interface Form {
   fields: FormField[];
 }
 
-export function BrowserPage() {
+export interface BrowserPageProps {
+  onGetLLMStatus?: () => Promise<{
+    status:
+      | 'disconnected'
+      | 'connecting'
+      | 'connected'
+      | 'processing'
+      | 'error';
+    message?: string;
+  }>;
+  onGetEnhancementDetails?: (fieldId: string) => Promise<
+    | {
+        prompt?: string;
+        response?: string;
+        confidence?: number;
+        fieldType?: string;
+      }
+    | undefined
+  >;
+}
+
+export function BrowserPage({
+  onGetLLMStatus,
+  onGetEnhancementDetails,
+}: BrowserPageProps = {}) {
   const {
     detectedForms,
     setDetectedForms,
@@ -54,7 +78,13 @@ export function BrowserPage() {
             onNavigationChange={handleNavigationChange}
           />
         }
-        right={<InteractiveFormPanel forms={detectedForms} />}
+        right={
+          <InteractiveFormPanel
+            forms={detectedForms}
+            onGetLLMStatus={onGetLLMStatus}
+            onGetEnhancementDetails={onGetEnhancementDetails}
+          />
+        }
         defaultSplit={65}
         minSize={30}
       />

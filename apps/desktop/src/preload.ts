@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('ollama:sendPrompt', model, prompt),
     testConnection: () => ipcRenderer.invoke('ollama:testConnection'),
   },
+  llm: {
+    getStatus: () => ipcRenderer.invoke('llm:getStatus'),
+    getEnhancementDetails: (fieldId: string) =>
+      ipcRenderer.invoke('llm:getEnhancementDetails', fieldId),
+    reconnect: () => ipcRenderer.invoke('llm:reconnect'),
+  },
   browser: {
     getCurrentUrl: () => ipcRenderer.invoke('browser:getCurrentUrl'),
     getHistory: () => ipcRenderer.invoke('browser:getHistory'),

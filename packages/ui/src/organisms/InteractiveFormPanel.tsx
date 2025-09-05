@@ -9,14 +9,44 @@ import { useBrowserContext } from '../contexts/browser/BrowserContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../atoms/card';
 import { Badge } from '../atoms/badge';
 import { ScrollArea } from '../atoms/scroll-area';
-import { ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  AlertCircle,
+  Sparkles,
+  Loader2,
+  WifiOff,
+} from 'lucide-react';
 import type { FormField, InteractiveFormField } from '../types/form';
 import { FormFieldInput } from '../molecules/FormFieldInput';
 import { validateField } from '../utils/formValidation';
+import { SectionSkeleton } from '../atoms/skeleton';
 
 export interface InteractiveFormPanelProps {
   forms: Array<{ fields: FormField[] }>;
   className?: string;
+  onGetLLMStatus?:
+    | (() => Promise<{
+        status:
+          | 'disconnected'
+          | 'connecting'
+          | 'connected'
+          | 'processing'
+          | 'error';
+        message?: string;
+      }>)
+    | undefined;
+  onGetEnhancementDetails?:
+    | ((fieldId: string) => Promise<
+        | {
+            prompt?: string;
+            response?: string;
+            confidence?: number;
+            fieldType?: string;
+          }
+        | undefined
+      >)
+    | undefined;
 }
 
 interface FieldGroup {
@@ -94,8 +124,26 @@ const FieldCard: React.FC<{
   onSave: (value: string) => void;
   onTabNext: (value: string) => void;
   onTabPrevious: (value: string) => void;
+  onCancel: () => void;
   isActive: boolean;
-}> = ({ field, onEdit, onSave, onTabNext, onTabPrevious, isActive }) => {
+  enhancement?:
+    | {
+        prompt?: string;
+        response?: string;
+        confidence?: number;
+        fieldType?: string;
+      }
+    | undefined;
+}> = ({
+  field,
+  onEdit,
+  onSave,
+  onTabNext,
+  onTabPrevious,
+  onCancel,
+  isActive,
+  enhancement,
+}) => {
   const displayLabel =
     field.label || field.placeholder || field.name || 'Field';
   const hasValue = field.uiValue || field.browserValue || field.value;
@@ -155,6 +203,30 @@ const FieldCard: React.FC<{
             {field.required && (
               <span className="text-red-500 text-xs">Required</span>
             )}
+            {enhancement && (
+              <div className="group relative inline-block">
+                <Sparkles className="w-3 h-3 text-blue-500 cursor-help" />
+                <div className="invisible group-hover:visible absolute left-0 top-5 z-10 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                  <div className="font-semibold mb-1">AI Enhancement</div>
+                  {enhancement.fieldType && (
+                    <div>Type: {enhancement.fieldType}</div>
+                  )}
+                  {enhancement.confidence && (
+                    <div>
+                      Confidence: {Math.round(enhancement.confidence * 100)}%
+                    </div>
+                  )}
+                  {enhancement.prompt && (
+                    <div className="mt-1 pt-1 border-t border-gray-700">
+                      <div className="font-semibold">Analyzed:</div>
+                      <div className="text-xs opacity-90">
+                        {enhancement.prompt.substring(0, 100)}...
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <Badge variant="outline" className="text-xs py-0 px-1">
@@ -207,9 +279,7 @@ const FieldCard: React.FC<{
         <QuickEditField
           field={field}
           onSave={onSave}
-          onCancel={() => {
-            // Reset to original value when cancelled
-          }}
+          onCancel={onCancel}
           onTabNext={onTabNext}
           onTabPrevious={onTabPrevious}
           autoFocus={true}
@@ -250,6 +320,8 @@ const FieldCard: React.FC<{
 export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
   forms,
   className = '',
+  onGetLLMStatus,
+  onGetEnhancementDetails,
 }) => {
   const {
     interactiveFields,
@@ -263,6 +335,27 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
     new Set(),
   );
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null);
+  const [llmStatus, setLlmStatus] = useState<{
+    status:
+      | 'disconnected'
+      | 'connecting'
+      | 'connected'
+      | 'processing'
+      | 'error';
+    message?: string;
+  }>({ status: 'disconnected' });
+  const [isProcessingFields, setIsProcessingFields] = useState(false);
+  const [fieldEnhancements, setFieldEnhancements] = useState<
+    Map<
+      string,
+      {
+        prompt?: string;
+        response?: string;
+        confidence?: number;
+        fieldType?: string;
+      }
+    >
+  >(new Map());
 
   // Initialize interactive fields when forms change
   useEffect(() => {
@@ -275,8 +368,67 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
         allFields.map((f) => f.section || 'Fields').filter(Boolean),
       );
       setExpandedSections(sections);
+
+      // Check if LLM is processing
+      setIsProcessingFields(true);
+
+      // Fetch enhancement details for all fields
+      if (onGetEnhancementDetails) {
+        Promise.all(
+          allFields.map(async (field) => {
+            const fieldId = field.id || field.name || '';
+            const details = await onGetEnhancementDetails(fieldId);
+            if (details) {
+              return { fieldId, details };
+            }
+            return null;
+          }),
+        ).then((results) => {
+          const enhancementsMap = new Map();
+          results.forEach((result) => {
+            if (result) {
+              enhancementsMap.set(result.fieldId, result.details);
+            }
+          });
+          setFieldEnhancements(enhancementsMap);
+          setIsProcessingFields(false);
+        });
+      } else {
+        setIsProcessingFields(false);
+      }
     }
-  }, [forms, initializeInteractiveFields]);
+  }, [forms, initializeInteractiveFields, onGetEnhancementDetails]);
+
+  // Poll for LLM status
+  useEffect(() => {
+    if (onGetLLMStatus) {
+      // Initial fetch
+      onGetLLMStatus()
+        .then(setLlmStatus)
+        .catch(() => {
+          setLlmStatus({
+            status: 'error',
+            message: 'Failed to get LLM status',
+          });
+        });
+
+      // Poll every 3 seconds
+      const interval = setInterval(() => {
+        onGetLLMStatus()
+          .then(setLlmStatus)
+          .catch(() => {
+            setLlmStatus({
+              status: 'error',
+              message: 'Failed to get LLM status',
+            });
+          });
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+    // Return empty cleanup if no handler
+    return undefined;
+  }, [onGetLLMStatus]);
 
   // Group fields by section from HTML
   const fieldGroups = useMemo(() => {
@@ -484,6 +636,49 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
     (f) => f.uiValue && f.uiValue !== f.browserValue,
   ).length;
 
+  // Show skeleton loading state when no forms detected yet but LLM is processing
+  if (
+    (!forms || forms.length === 0) &&
+    (llmStatus.status === 'processing' || llmStatus.status === 'connecting')
+  ) {
+    return (
+      <Card className={`flex flex-col h-full overflow-hidden ${className}`}>
+        <CardHeader className="flex-shrink-0 pb-3 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">Form Fields</CardTitle>
+              <Badge
+                variant="secondary"
+                className="text-xs flex items-center gap-1"
+              >
+                <Loader2 className="w-3 h-3 animate-spin" />
+                {llmStatus.status === 'connecting'
+                  ? 'Connecting...'
+                  : 'Detecting fields...'}
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <ScrollArea className="h-full w-full">
+            <div className="p-4 space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700">
+                    AI is analyzing the page for form fields...
+                  </span>
+                </div>
+              </div>
+              <SectionSkeleton fieldCount={4} />
+              <SectionSkeleton fieldCount={3} />
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!forms || forms.length === 0) {
     return (
       <Card className={className}>
@@ -503,7 +698,55 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
     <Card className={`flex flex-col h-full overflow-hidden ${className}`}>
       <CardHeader className="flex-shrink-0 pb-3 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Form Fields</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg">Form Fields</CardTitle>
+            {/* LLM Status Indicator */}
+            {llmStatus.status === 'connected' && (
+              <Badge
+                variant="default"
+                className="text-xs flex items-center gap-1"
+              >
+                <Sparkles className="w-3 h-3" />
+                AI Active
+              </Badge>
+            )}
+            {llmStatus.status === 'processing' && (
+              <Badge
+                variant="secondary"
+                className="text-xs flex items-center gap-1"
+              >
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Analyzing...
+              </Badge>
+            )}
+            {llmStatus.status === 'connecting' && (
+              <Badge
+                variant="secondary"
+                className="text-xs flex items-center gap-1"
+              >
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Connecting...
+              </Badge>
+            )}
+            {llmStatus.status === 'disconnected' && (
+              <Badge
+                variant="outline"
+                className="text-xs flex items-center gap-1"
+              >
+                <WifiOff className="w-3 h-3" />
+                AI Offline
+              </Badge>
+            )}
+            {llmStatus.status === 'error' && (
+              <Badge
+                variant="destructive"
+                className="text-xs flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                Error
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
               {filledFields}/{totalFields} filled
@@ -541,6 +784,49 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
       <CardContent className="flex-1 overflow-hidden p-0">
         <ScrollArea className="h-full w-full">
           <div className="p-4 space-y-4">
+            {/* Show processing state when fields are detected but AI is still enhancing */}
+            {isProcessingFields && fieldGroups.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700">
+                    AI is enhancing field detection and analysis...
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Show field-level skeletons while fields are being processed but not yet shown */}
+            {isProcessingFields &&
+              fieldGroups.length === 0 &&
+              forms &&
+              forms.length > 0 && (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <span className="text-sm text-blue-700">
+                        AI is processing {forms.flatMap((f) => f.fields).length}{' '}
+                        detected fields...
+                      </span>
+                    </div>
+                  </div>
+                  <SectionSkeleton
+                    fieldCount={Math.min(
+                      forms.flatMap((f) => f.fields).length,
+                      6,
+                    )}
+                  />
+                  {forms.flatMap((f) => f.fields).length > 6 && (
+                    <SectionSkeleton
+                      fieldCount={Math.min(
+                        forms.flatMap((f) => f.fields).length - 6,
+                        4,
+                      )}
+                    />
+                  )}
+                </>
+              )}
             {fieldGroups.map((group) => (
               <div key={group.section} className="space-y-2">
                 {/* Section Header */}
@@ -585,7 +871,9 @@ export const InteractiveFormPanel: React.FC<InteractiveFormPanelProps> = ({
                           onTabPrevious={(value) =>
                             handleTabPrevious(fieldId, value)
                           }
+                          onCancel={() => setActiveFieldId(null)}
                           isActive={activeFieldId === fieldId}
+                          enhancement={fieldEnhancements.get(fieldId)}
                         />
                       );
                     })}

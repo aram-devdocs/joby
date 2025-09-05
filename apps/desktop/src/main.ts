@@ -55,7 +55,6 @@ app.on('activate', () => {
 // Initialize persistent store
 const store = new Store<{
   enhancement: {
-    enableLLM: boolean;
     enableCache: boolean;
     selectedModel: string;
   };
@@ -65,7 +64,6 @@ const store = new Store<{
 }>({
   defaults: {
     enhancement: {
-      enableLLM: false,
       enableCache: true,
       selectedModel: 'llama3.2',
     },
@@ -87,12 +85,13 @@ interface StoreType {
   set(key: string, value: unknown): void;
 }
 const savedConfig = (store as unknown as StoreType).get('enhancement') as {
-  enableLLM: boolean;
   selectedModel?: string;
 };
-formAnalyzer.setLLMEnabled(savedConfig.enableLLM);
+
+// LLM is always enabled now
+formAnalyzer.setLLMEnabled(true);
 if (savedConfig.selectedModel) {
-  // Store the selected model for later use
+  formAnalyzer.setSelectedModel(savedConfig.selectedModel);
 }
 
 const savedOllamaHost = (
@@ -101,6 +100,53 @@ const savedOllamaHost = (
 if (savedOllamaHost) {
   ollamaService.updateHost(savedOllamaHost);
 }
+
+// Auto-connect to Ollama on startup with retry logic
+let retryCount = 0;
+const maxRetries = 3;
+const retryDelay = 2000;
+
+const connectToOllama = async () => {
+  try {
+    const models = await ollamaService.listModels();
+    if (models.length > 0) {
+      // Successfully connected
+      if (mainWindow) {
+        mainWindow.webContents.send('llm:status', {
+          status: 'connected',
+          message: 'Connected to Ollama',
+          models,
+        });
+      }
+      return true;
+    }
+  } catch (error) {
+    retryCount++;
+    if (retryCount <= maxRetries) {
+      if (mainWindow) {
+        mainWindow.webContents.send('llm:status', {
+          status: 'connecting',
+          message: `Attempting to connect to Ollama (attempt ${retryCount}/${maxRetries})...`,
+        });
+      }
+      setTimeout(connectToOllama, retryDelay);
+    } else {
+      if (mainWindow) {
+        mainWindow.webContents.send('llm:status', {
+          status: 'error',
+          message: 'Failed to connect to Ollama after multiple attempts',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  }
+  return false;
+};
+
+// Start auto-connect after app is ready
+app.whenReady().then(() => {
+  setTimeout(connectToOllama, 1000);
+});
 
 // IPC handlers for Ollama
 ipcMain.handle('ollama:setHost', async (_event, host: string) => {
@@ -162,15 +208,30 @@ ipcMain.handle(
   },
 );
 
-// Configuration handlers for field enhancement
-ipcMain.handle('browser:setLLMEnabled', (_event, enabled: boolean) => {
-  formAnalyzer.setLLMEnabled(enabled);
-  return { success: true, llmEnabled: enabled };
+// LLM Status handlers
+ipcMain.handle('llm:getStatus', async () => {
+  return formAnalyzer.getLLMStatus();
+});
+
+ipcMain.handle('llm:getEnhancementDetails', async (_event, fieldId: string) => {
+  // Get enhancement details for a specific field
+  const details = formAnalyzer.getFieldEnhancementDetails(fieldId);
+  return details;
+});
+
+ipcMain.handle('llm:reconnect', async () => {
+  // Manual reconnect attempt
+  retryCount = 0;
+  return connectToOllama();
 });
 
 ipcMain.handle('browser:getEnhancementConfig', () => {
-  const config = (store as unknown as StoreType).get('enhancement');
-  return config;
+  const config = (store as unknown as StoreType).get('enhancement') as {
+    enableCache: boolean;
+    selectedModel?: string;
+  };
+  // Always return enableLLM as true for backward compatibility
+  return { ...config, enableLLM: true };
 });
 
 ipcMain.handle(
@@ -178,22 +239,23 @@ ipcMain.handle(
   (
     _event,
     config: {
-      enableLLM: boolean;
+      enableLLM?: boolean; // Keep for backward compatibility but ignore
       enableCache: boolean;
       selectedModel?: string;
     },
   ) => {
-    // Update the form analyzer configuration
-    formAnalyzer.setLLMEnabled(config.enableLLM);
+    // LLM is always enabled now, ignore enableLLM if provided
+    if (config.selectedModel) {
+      formAnalyzer.setSelectedModel(config.selectedModel);
+    }
 
-    // Save to persistent storage
+    // Save to persistent storage (without enableLLM)
     (store as unknown as StoreType).set('enhancement', {
-      enableLLM: config.enableLLM,
       enableCache: config.enableCache,
       selectedModel: config.selectedModel || 'llama3.2',
     });
 
-    return { success: true, config };
+    return { success: true, config: { ...config, enableLLM: true } };
   },
 );
 

@@ -4,6 +4,9 @@ import type {
   FieldEnhancement,
   EnhancementCache,
   EnhancementConfig,
+  LLMStatus,
+  LLMConnectionStatus,
+  EnhancementDetails,
 } from './types';
 import { SimpleMemoryCache } from './cache/SimpleMemoryCache';
 import { LLMEnhancer } from './enhancers/LLMEnhancer';
@@ -13,10 +16,17 @@ export class FieldEnhancementService {
   private cache: EnhancementCache;
   private config: EnhancementConfig;
   private static instance: FieldEnhancementService | null = null;
+  private llmStatus: LLMConnectionStatus = {
+    status: 'disconnected',
+    message: 'Not connected to Ollama',
+  };
+  private enhancementHistory: Map<string, EnhancementDetails> = new Map();
+  private connectionRetryTimer?: NodeJS.Timeout;
+  private retryCount = 0;
+  private maxRetries = 10;
 
   constructor(config?: EnhancementConfig) {
     this.config = {
-      enableLLM: false,
       enableCache: true,
       cacheConfig: {
         maxSize: 1000,
@@ -27,6 +37,9 @@ export class FieldEnhancementService {
         temperature: 0.1,
         maxRetries: 2,
         timeoutMs: 5000,
+        autoConnect: true,
+        retryDelayMs: 1000,
+        maxConnectionRetries: 10,
       },
       confidenceThresholds: {
         high: 0.8,
@@ -42,6 +55,11 @@ export class FieldEnhancementService {
     );
 
     this.initializeEnhancers();
+
+    // Auto-connect to Ollama if configured
+    if (this.config.llmConfig?.autoConnect) {
+      this.connectToOllama();
+    }
   }
 
   static getInstance(config?: EnhancementConfig): FieldEnhancementService {
@@ -52,9 +70,105 @@ export class FieldEnhancementService {
   }
 
   private initializeEnhancers(): void {
-    if (this.config.enableLLM) {
-      this.registerEnhancer(new LLMEnhancer(this.config.llmConfig));
+    // Always initialize LLM enhancer
+    const llmEnhancer = new LLMEnhancer(this.config.llmConfig);
+    this.registerEnhancer(llmEnhancer);
+  }
+
+  async connectToOllama(): Promise<{ success: boolean; status: LLMStatus }> {
+    this.updateLLMStatus('connecting', 'Connecting to Ollama...');
+
+    try {
+      // Get the LLM enhancer
+      const llmEnhancer = this.enhancers.find(
+        (e) => e.name === 'LLMEnhancer',
+      ) as LLMEnhancer | undefined;
+
+      if (!llmEnhancer) {
+        throw new Error('LLM Enhancer not initialized');
+      }
+
+      // Test connection (this would need to be implemented in LLMEnhancer)
+      const connected = await llmEnhancer.testConnection();
+
+      if (connected) {
+        this.updateLLMStatus('connected', 'Connected to Ollama');
+        this.retryCount = 0;
+        return { success: true, status: 'connected' };
+      } else {
+        throw new Error('Failed to connect to Ollama');
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.updateLLMStatus('error', `Connection failed: ${errorMessage}`);
+
+      // Schedule retry with exponential backoff
+      if (this.retryCount < this.maxRetries) {
+        this.scheduleRetry();
+      }
+
+      return { success: false, status: 'error' };
     }
+  }
+
+  private scheduleRetry(): void {
+    if (this.connectionRetryTimer) {
+      clearTimeout(this.connectionRetryTimer);
+    }
+
+    const delay = Math.min(
+      (this.config.llmConfig?.retryDelayMs || 1000) *
+        Math.pow(2, this.retryCount),
+      30000, // Max 30 seconds
+    );
+
+    this.retryCount++;
+    const nextRetryAt = Date.now() + delay;
+
+    this.llmStatus = {
+      ...this.llmStatus,
+      retryCount: this.retryCount,
+      nextRetryAt,
+    };
+
+    this.connectionRetryTimer = setTimeout(() => {
+      this.connectToOllama();
+    }, delay);
+  }
+
+  disconnect(): { success: boolean } {
+    if (this.connectionRetryTimer) {
+      clearTimeout(this.connectionRetryTimer);
+    }
+
+    this.updateLLMStatus('disconnected', 'Disconnected from Ollama');
+    this.retryCount = 0;
+
+    return { success: true };
+  }
+
+  private updateLLMStatus(status: LLMStatus, message?: string): void {
+    const now = Date.now();
+
+    this.llmStatus = {
+      status,
+      ...(message !== undefined && { message }),
+      ...(status === 'error' &&
+        message !== undefined && { lastError: message }),
+      ...(status === 'connected' && { connectedAt: now }),
+      ...(status === 'disconnected' && { disconnectedAt: now }),
+      ...(this.llmStatus.retryCount !== undefined && {
+        retryCount: this.llmStatus.retryCount,
+      }),
+      ...(this.llmStatus.nextRetryAt !== undefined && {
+        nextRetryAt: this.llmStatus.nextRetryAt,
+      }),
+    };
+  }
+
+  getLLMStatus(): LLMConnectionStatus {
+    return { ...this.llmStatus };
   }
 
   registerEnhancer(enhancer: FieldEnhancer): void {
@@ -64,6 +178,7 @@ export class FieldEnhancementService {
 
   async enhanceField(context: FieldContext): Promise<FieldEnhancement> {
     const cacheKey = SimpleMemoryCache.createCacheKey(context.element);
+    const startTime = Date.now();
 
     if (this.config.enableCache) {
       const cached = this.cache.get(cacheKey);
@@ -77,15 +192,57 @@ export class FieldEnhancementService {
       source: 'hybrid',
     };
 
+    // Update status to processing when using LLM
+    const hasLLMEnhancer = this.enhancers.some(
+      (e) => e.name === 'LLMEnhancer' && e.isEnabled,
+    );
+    if (hasLLMEnhancer && this.llmStatus.status === 'connected') {
+      this.updateLLMStatus('processing', 'Processing field enhancement...');
+    }
+
     const enabledEnhancers = this.enhancers.filter((e) => e.isEnabled);
     const enhancementPromises = enabledEnhancers
       .filter((enhancer) => enhancer.canEnhance(context))
       .map(async (enhancer) => {
         try {
-          return await enhancer.enhance(context);
-        } catch {
-          // Silently catch errors from individual enhancers
-          // Enhancement will proceed with other enhancers
+          const enhancement = await enhancer.enhance(context);
+
+          // Store enhancement details if from LLM
+          if (enhancement && enhancer.name === 'LLMEnhancer') {
+            const details: EnhancementDetails = {
+              prompt: this.createPromptFromContext(context),
+              response: JSON.stringify(enhancement),
+              timestamp: Date.now(),
+              duration: Date.now() - startTime,
+              ...(this.config.llmConfig?.model && {
+                model: this.config.llmConfig.model,
+              }),
+            };
+
+            this.enhancementHistory.set(cacheKey, details);
+
+            if (enhancement) {
+              enhancement.enhancementDetails = details;
+            }
+          }
+
+          return enhancement;
+        } catch (error) {
+          // Store error details
+          if (enhancer.name === 'LLMEnhancer') {
+            const details: EnhancementDetails = {
+              prompt: this.createPromptFromContext(context),
+              response: '',
+              timestamp: Date.now(),
+              duration: Date.now() - startTime,
+              ...(this.config.llmConfig?.model && {
+                model: this.config.llmConfig.model,
+              }),
+              error: error instanceof Error ? error.message : 'Unknown error',
+            };
+
+            this.enhancementHistory.set(cacheKey, details);
+          }
           return null;
         }
       });
@@ -128,7 +285,35 @@ export class FieldEnhancementService {
       this.cache.set(cacheKey, mergedEnhancement);
     }
 
+    // Update status back to connected after processing
+    if (hasLLMEnhancer && this.llmStatus.status === 'processing') {
+      this.updateLLMStatus('connected', 'Ready');
+    }
+
     return mergedEnhancement;
+  }
+
+  private createPromptFromContext(context: FieldContext): string {
+    // Create a prompt from the field context for transparency
+    const parts = [
+      `Analyze this form field:`,
+      `Type: ${context.element.type || 'unknown'}`,
+      `Name: ${context.element.name || 'unnamed'}`,
+      `Label: ${context.element.label || 'no label'}`,
+      `Placeholder: ${context.element.placeholder || 'none'}`,
+    ];
+
+    if (context.formContext) {
+      parts.push(`Form: ${context.formContext.formName || 'unnamed form'}`);
+    }
+
+    if (context.pageContext) {
+      parts.push(
+        `Page: ${context.pageContext.pageTitle || context.pageContext.pageUrl || 'unknown page'}`,
+      );
+    }
+
+    return parts.join('\n');
   }
 
   async enhanceFields(contexts: FieldContext[]): Promise<FieldEnhancement[]> {
@@ -161,16 +346,12 @@ export class FieldEnhancementService {
     this.cache.clear();
   }
 
-  enableLLM(enable: boolean): void {
-    this.config.enableLLM = enable;
-    if (enable && !this.enhancers.find((e) => e.name === 'LLMEnhancer')) {
-      this.registerEnhancer(new LLMEnhancer(this.config.llmConfig));
-    } else if (!enable) {
-      const llmEnhancer = this.enhancers.find((e) => e.name === 'LLMEnhancer');
-      if (llmEnhancer) {
-        llmEnhancer.isEnabled = false;
-      }
-    }
+  getEnhancementDetails(fieldKey: string): EnhancementDetails | undefined {
+    return this.enhancementHistory.get(fieldKey);
+  }
+
+  clearEnhancementHistory(): void {
+    this.enhancementHistory.clear();
   }
 
   getConfig(): EnhancementConfig {
@@ -181,5 +362,33 @@ export class FieldEnhancementService {
     this.config = { ...this.config, ...config };
     this.enhancers = [];
     this.initializeEnhancers();
+
+    // Reconnect if model changed
+    if (config.llmConfig?.model) {
+      this.connectToOllama();
+    }
+  }
+
+  /**
+   * Set the LLM model to use for enhancement
+   */
+  setModel(model: string): void {
+    this.updateConfig({
+      llmConfig: {
+        ...this.config.llmConfig,
+        model,
+      },
+    });
+  }
+
+  /**
+   * Get enhancement details for a specific field
+   */
+  getFieldEnhancementDetails(fieldId: string): EnhancementDetails | undefined {
+    // Try to get from history using the field ID
+    return (
+      this.enhancementHistory.get(fieldId) ||
+      this.getEnhancementDetails(fieldId)
+    );
   }
 }

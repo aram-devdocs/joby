@@ -15,6 +15,7 @@ export { DashboardTemplate } from './templates/DashboardTemplate';
 
 // Pages - Complete page components
 export { BrowserPage } from './pages/BrowserPage';
+export type { BrowserPageProps } from './pages/BrowserPage';
 export { OllamaPage } from './pages/OllamaPage';
 export type { OllamaPageProps } from './pages/OllamaPage';
 export { SettingsPage } from './pages/SettingsPage';

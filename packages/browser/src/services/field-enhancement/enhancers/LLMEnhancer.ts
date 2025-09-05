@@ -19,7 +19,7 @@ export class LLMEnhancer implements FieldEnhancer {
     ollamaHost?: string;
   }) {
     this.model = config?.model || 'llama2';
-    // Temperature parameter is passed to individual prompts if needed
+    // Temperature could be used in future for prompt tuning
     // const temperature = config?.temperature || 0.1;
     this.maxRetries = config?.maxRetries || 2;
     this.timeoutMs = config?.timeoutMs || 5000;
@@ -27,9 +27,17 @@ export class LLMEnhancer implements FieldEnhancer {
     this.ollamaService = new OllamaService({
       host: config?.ollamaHost || 'http://127.0.0.1:11434',
     });
+  }
 
-    // Store temperature for later use in prompts if needed
-    // Currently not used but available for future enhancements
+  async testConnection(): Promise<boolean> {
+    try {
+      // Try to get models list to test connection
+      const models = await this.ollamaService.listModels();
+      return models && models.length > 0;
+    } catch {
+      // Connection failed
+      return false;
+    }
   }
 
   canEnhance(context: FieldContext): boolean {
@@ -58,8 +66,8 @@ export class LLMEnhancer implements FieldEnhancer {
 
       const result = await Promise.race([enhancementPromise, timeoutPromise]);
       return result;
-    } catch (error) {
-      console.warn('LLM enhancement failed, falling back to null:', error);
+    } catch {
+      // Silently handle enhancement errors
       return null;
     }
   }
@@ -106,8 +114,6 @@ Response format (JSON only):
   }
 
   private async queryLLM(prompt: string): Promise<FieldEnhancement | null> {
-    let lastError: Error | null = null;
-
     for (let i = 0; i < this.maxRetries; i++) {
       try {
         const response = await this.ollamaService.sendPrompt({
@@ -122,14 +128,10 @@ Response format (JSON only):
             source: 'llm',
           };
         }
-      } catch (error) {
-        lastError = error as Error;
+      } catch {
+        // Retry with exponential backoff
         await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
       }
-    }
-
-    if (lastError) {
-      console.warn('LLM query failed after retries:', lastError.message);
     }
 
     return null;
@@ -155,8 +157,8 @@ Response format (JSON only):
         confidence: parsed.confidence || 0.5,
         source: 'llm',
       };
-    } catch (error) {
-      console.warn('Failed to parse LLM response:', error);
+    } catch {
+      // Failed to parse, return null
       return null;
     }
   }

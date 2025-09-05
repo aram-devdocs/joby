@@ -91,10 +91,16 @@ export class FormAnalyzer {
   private enhancementService: FieldEnhancementService;
 
   constructor() {
-    // Initialize with LLM enhancement disabled by default
+    // Always initialize with LLM enhancement enabled
     this.enhancementService = FieldEnhancementService.getInstance({
-      enableLLM: false,
       enableCache: true,
+      llmConfig: {
+        autoConnect: true,
+        model: 'llama2',
+        temperature: 0.1,
+        maxRetries: 2,
+        timeoutMs: 5000,
+      },
     });
   }
   async analyzeHTML(
@@ -593,10 +599,24 @@ export class FormAnalyzer {
   }
 
   /**
-   * Enable or disable LLM enhancement
+   * Get LLM connection status
    */
-  setLLMEnabled(enabled: boolean): void {
-    this.enhancementService.enableLLM(enabled);
+  getLLMStatus() {
+    return this.enhancementService.getLLMStatus();
+  }
+
+  /**
+   * Connect to Ollama LLM service
+   */
+  async connectToLLM() {
+    return this.enhancementService.connectToOllama();
+  }
+
+  /**
+   * Disconnect from Ollama LLM service
+   */
+  disconnectFromLLM() {
+    return this.enhancementService.disconnect();
   }
 
   /**
@@ -604,6 +624,28 @@ export class FormAnalyzer {
    */
   getEnhancementConfig() {
     return this.enhancementService.getConfig();
+  }
+
+  /**
+   * Set LLM enabled state (deprecated - LLM is always enabled)
+   */
+  setLLMEnabled(_enabled: boolean) {
+    // LLM is always enabled now, this method is kept for backward compatibility
+    // No-op
+  }
+
+  /**
+   * Set selected model for LLM enhancement
+   */
+  setSelectedModel(model: string) {
+    this.enhancementService.setModel(model);
+  }
+
+  /**
+   * Get enhancement details for a specific field
+   */
+  getFieldEnhancementDetails(fieldId: string) {
+    return this.enhancementService.getFieldEnhancementDetails(fieldId);
   }
 
   private generateSelector(

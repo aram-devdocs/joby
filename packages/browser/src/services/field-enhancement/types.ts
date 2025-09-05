@@ -1,3 +1,21 @@
+// LLM status tracking
+export type LLMStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'processing'
+  | 'error';
+
+// Enhancement details for transparency
+export interface EnhancementDetails {
+  prompt: string;
+  response: string;
+  timestamp: number;
+  duration?: number;
+  model?: string;
+  error?: string;
+}
+
 export interface FieldEnhancement {
   fieldType?: string;
   label?: string;
@@ -13,6 +31,7 @@ export interface FieldEnhancement {
   confidence: number;
   source: 'llm' | 'cache' | 'hybrid';
   metadata?: Record<string, unknown>;
+  enhancementDetails?: EnhancementDetails;
 }
 
 export interface FieldContext {
@@ -65,8 +84,7 @@ export interface EnhancementCache {
 }
 
 export interface EnhancementConfig {
-  // enableStatic removed - pattern-based detection no longer supported
-  enableLLM?: boolean;
+  // LLM is always enabled - no toggle needed
   enableCache?: boolean;
   cacheConfig?: {
     maxSize?: number;
@@ -77,10 +95,23 @@ export interface EnhancementConfig {
     temperature?: number;
     maxRetries?: number;
     timeoutMs?: number;
+    autoConnect?: boolean;
+    retryDelayMs?: number;
+    maxConnectionRetries?: number;
   };
   confidenceThresholds?: {
     high?: number;
     medium?: number;
     low?: number;
   };
+}
+
+export interface LLMConnectionStatus {
+  status: LLMStatus;
+  message?: string;
+  lastError?: string;
+  connectedAt?: number;
+  disconnectedAt?: number;
+  retryCount?: number;
+  nextRetryAt?: number;
 }

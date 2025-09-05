@@ -1,3 +1,4 @@
+/// <reference path="./types/window.d.ts" />
 import React from 'react';
 import {
   HashRouter as Router,
@@ -133,21 +134,55 @@ export const App: React.FC = () => {
     return { connected: false };
   };
 
-  const handleGetEnhancementConfig = async () => {
+  const handleGetEnhancementConfig = async (): Promise<{
+    enableCache: boolean;
+    selectedModel?: string;
+  }> => {
     if (window.electronAPI?.browser?.getEnhancementConfig) {
-      return window.electronAPI.browser.getEnhancementConfig();
+      const config = await window.electronAPI.browser.getEnhancementConfig();
+      // Return only the fields expected by the new SettingsPage interface
+      const result: { enableCache: boolean; selectedModel?: string } = {
+        enableCache: config.enableCache,
+      };
+      if (config.selectedModel !== undefined) {
+        result.selectedModel = config.selectedModel;
+      }
+      return result;
     }
-    return { enableLLM: false, enableCache: true };
+    // LLM is always enabled now
+    return { enableCache: true };
   };
 
   const handleUpdateEnhancementConfig = async (config: {
-    enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;
   }): Promise<void> => {
     if (window.electronAPI?.browser?.updateEnhancementConfig) {
+      // Backend now expects the same interface as frontend (without enableLLM)
       await window.electronAPI.browser.updateEnhancementConfig(config);
     }
+  };
+
+  // LLM Status handlers
+  const handleGetLLMStatus = async () => {
+    if (window.electronAPI?.llm?.getStatus) {
+      return window.electronAPI.llm.getStatus();
+    }
+    return { status: 'disconnected' as const };
+  };
+
+  const handleGetEnhancementDetails = async (fieldId: string) => {
+    if (window.electronAPI?.llm?.getEnhancementDetails) {
+      return window.electronAPI.llm.getEnhancementDetails(fieldId);
+    }
+    return undefined;
+  };
+
+  const handleGetOllamaHost = async () => {
+    if (window.electronAPI?.ollama?.getHost) {
+      return window.electronAPI.ollama.getHost();
+    }
+    return 'http://localhost:11434';
   };
 
   return (
@@ -156,7 +191,15 @@ export const App: React.FC = () => {
         <DashboardWrapper>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/browser" element={<BrowserPage />} />
+            <Route
+              path="/browser"
+              element={
+                <BrowserPage
+                  onGetLLMStatus={handleGetLLMStatus}
+                  onGetEnhancementDetails={handleGetEnhancementDetails}
+                />
+              }
+            />
             <Route
               path="/ollama"
               element={
@@ -174,6 +217,7 @@ export const App: React.FC = () => {
               element={
                 <SettingsPage
                   onSetOllamaHost={handleSetHost}
+                  onGetOllamaHost={handleGetOllamaHost}
                   onTestOllamaConnection={handleTestOllamaConnection}
                   onGetEnhancementConfig={handleGetEnhancementConfig}
                   onUpdateEnhancementConfig={handleUpdateEnhancementConfig}

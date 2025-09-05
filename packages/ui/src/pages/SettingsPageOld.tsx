@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../atoms';
 import { Button } from '../atoms/button';
 import { Badge } from '../atoms/badge';
-import { useBrowserContext } from '../contexts/browser/BrowserContext';
 import {
   Wifi,
   WifiOff,
@@ -22,10 +21,12 @@ export interface SettingsPageProps {
     models?: Array<string | { name: string; [key: string]: unknown }>;
   }>;
   onGetEnhancementConfig?: () => Promise<{
+    enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;
   }>;
   onUpdateEnhancementConfig?: (config: {
+    enableLLM: boolean;
     enableCache: boolean;
     selectedModel?: string;
   }) => Promise<void>;
@@ -38,22 +39,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onGetEnhancementConfig,
   onUpdateEnhancementConfig,
 }) => {
-  const { llmStatus } = useBrowserContext();
-
-  // Local state for UI
   const [ollamaHost, setOllamaHost] = useState('http://localhost:11434');
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [isConnected, setIsConnected] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionError, setConnectionError] = useState<string>('');
+
+  // Form enhancement settings (LLM is always enabled)
   const [enableCache, setEnableCache] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
 
   // Load initial configuration
   useEffect(() => {
     if (onGetEnhancementConfig) {
       onGetEnhancementConfig()
         .then((config) => {
+          // LLM is always enabled, no need to set enableLLM
           setEnableCache(config.enableCache);
           if (config.selectedModel !== undefined) {
             setSelectedModel(config.selectedModel);
@@ -65,18 +68,53 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   }, [onGetEnhancementConfig]);
 
-  // Load saved Ollama host
+  // Auto-connect function defined before usage
+  const autoConnect = useCallback(async () => {
+    if (!onTestOllamaConnection || isAutoConnecting) return;
+
+    setIsAutoConnecting(true);
+    setConnectionError('');
+
+    try {
+      const result = await onTestOllamaConnection();
+      setIsConnected(result.connected);
+
+      if (result.connected && result.models) {
+        const modelNames = result.models
+          .map((model) => (typeof model === 'string' ? model : model.name))
+          .filter(Boolean);
+
+        setOllamaModels(modelNames);
+        if (!selectedModel && modelNames.length > 0 && modelNames[0]) {
+          setSelectedModel(modelNames[0]);
+        }
+      }
+    } catch {
+      setIsConnected(false);
+    } finally {
+      setIsAutoConnecting(false);
+    }
+  }, [onTestOllamaConnection, isAutoConnecting, selectedModel]);
+
+  // Load saved Ollama host and auto-connect
   useEffect(() => {
     if (onGetOllamaHost) {
       onGetOllamaHost()
         .then((host) => {
           setOllamaHost(host);
+          // Auto-connect on mount
+          autoConnect();
         })
         .catch(() => {
           // Silently handle host loading errors - use default
+          // Still try to connect with default host
+          autoConnect();
         });
+    } else {
+      // Try to connect even if no host getter
+      autoConnect();
     }
-  }, [onGetOllamaHost]);
+  }, [onGetOllamaHost, autoConnect]);
 
   const testConnection = async () => {
     if (!onTestOllamaConnection) return;
@@ -86,6 +124,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
     try {
       const result = await onTestOllamaConnection();
+      setIsConnected(result.connected);
 
       if (result.connected && result.models) {
         // Extract model names from Ollama model objects
@@ -107,6 +146,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         );
       }
     } catch (error) {
+      setIsConnected(false);
       setConnectionError(
         error instanceof Error ? error.message : 'Unknown error occurred',
       );
@@ -146,6 +186,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
     try {
       await onUpdateEnhancementConfig({
+        enableLLM: true, // Always true
         enableCache,
         ...(selectedModel && { selectedModel }),
       });
@@ -155,64 +196,57 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  // Use global LLM status instead of local connection state
   const getConnectionStatus = () => {
-    if (isTestingConnection) {
+    if (isTestingConnection || isAutoConnecting) {
       return (
         <Badge variant="secondary" className="flex items-center gap-1">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Testing...
+          {isAutoConnecting ? 'Connecting...' : 'Testing...'}
         </Badge>
       );
     }
 
-    switch (llmStatus.status) {
-      case 'connected':
-        return (
-          <Badge
-            variant="default"
-            className="flex items-center gap-1 bg-green-600"
-          >
-            <CheckCircle className="h-3 w-3" />
-            Connected
-          </Badge>
-        );
-      case 'connecting':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Connecting...
-          </Badge>
-        );
-      case 'error':
-        return (
-          <Badge variant="destructive" className="flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            Error
-          </Badge>
-        );
-      case 'processing':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <RefreshCw className="h-3 w-3 animate-spin" />
-            Processing
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <WifiOff className="h-3 w-3" />
-            Disconnected
-          </Badge>
-        );
+    if (isConnected) {
+      return (
+        <Badge variant="success" className="flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" />
+          Connected
+        </Badge>
+      );
     }
+
+    return (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" />
+        Disconnected
+      </Badge>
+    );
   };
 
   const getEnhancementStatus = () => {
+    // LLM is always enabled, show connection status
+    if (isConnected) {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          AI Active
+        </Badge>
+      );
+    }
+
+    if (isAutoConnecting) {
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Connecting to AI...
+        </Badge>
+      );
+    }
+
     return (
-      <Badge variant="default" className="flex items-center gap-1 bg-blue-600">
-        <Sparkles className="h-3 w-3" />
-        AI Enhancement Always Active
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <WifiOff className="h-3 w-3" />
+        AI Offline
       </Badge>
     );
   };
@@ -223,7 +257,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div>
           <h1 className="text-2xl font-bold mb-2">Settings</h1>
           <p className="text-gray-600">
-            Configure your Ollama connection and preferences
+            Configure your preferences and connections
           </p>
         </div>
         {getEnhancementStatus()}
@@ -232,31 +266,62 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* AI Enhancement Status */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI Enhancement Status
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              AI Enhancement
+            </CardTitle>
+            {getEnhancementStatus()}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div>
-              <div className="font-medium text-blue-900">Always Active</div>
-              <div className="text-sm text-blue-700">
-                AI enhancement is automatically enabled for all form analysis.
-                Ollama connection status:{' '}
-                <span className="font-medium">{llmStatus.status}</span>
+          {/* Connection Status Message */}
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-blue-900">
+                  AI Enhancement is Always Active
+                </p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Joby uses AI to intelligently detect and classify form fields
+                  for better autofill accuracy.
+                  {isConnected
+                    ? ' The AI is currently connected and processing fields.'
+                    : ' Waiting for AI connection...'}
+                </p>
               </div>
-              {llmStatus.message && (
-                <div className="text-xs text-blue-600 mt-1">
-                  {llmStatus.message}
-                </div>
-              )}
             </div>
-            <Sparkles className="h-8 w-8 text-blue-600" />
           </div>
 
+          {/* Model Selection (only show when connected) */}
+          {isConnected && ollamaModels.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                AI Model
+              </label>
+              <select
+                value={selectedModel}
+                onChange={(e) =>
+                  handleSettingsChange('selectedModel', e.target.value)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a model...</option>
+                {ollamaModels.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                Different models may have varying accuracy and speed.
+              </p>
+            </div>
+          )}
+
           {/* Cache Settings */}
-          <div className="space-y-3">
+          <div className="border-t pt-4">
             <label className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -267,9 +332,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 className="rounded"
               />
               <div>
-                <span className="font-medium">Enable Caching</span>
+                <span className="font-medium">Enable Result Caching</span>
                 <p className="text-sm text-gray-600">
-                  Cache enhancement results for better performance
+                  Cache AI analysis results to improve performance on frequently
+                  visited pages
                 </p>
               </div>
             </label>
@@ -320,30 +386,28 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
           {connectionError && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-700">{connectionError}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-red-700">{connectionError}</p>
+                <Button
+                  onClick={testConnection}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Retry
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* Model Selection */}
-          {llmStatus.status === 'connected' && ollamaModels.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Select Model for Enhancement
-              </label>
-              <select
-                value={selectedModel}
-                onChange={(e) =>
-                  handleSettingsChange('selectedModel', e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a model...</option>
-                {ollamaModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </select>
+          {/* Connection Instructions */}
+          {!isConnected && !isAutoConnecting && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+              <p className="text-sm text-amber-700">
+                AI enhancement requires Ollama to be running. Please ensure
+                Ollama is installed and running at {ollamaHost}.
+              </p>
             </div>
           )}
 

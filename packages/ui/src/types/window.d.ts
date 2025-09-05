@@ -11,8 +11,34 @@ declare global {
       };
       ollama: {
         setHost: (host: string) => Promise<{ success: boolean }>;
+        getHost: () => Promise<string>;
         getModels: () => Promise<Array<{ name: string; modified_at: string }>>;
+        testConnection: () => Promise<{
+          connected: boolean;
+          models?: Array<string | { name: string; [key: string]: unknown }>;
+        }>;
         sendPrompt: (model: string, prompt: string) => Promise<string>;
+      };
+      llm: {
+        getStatus: () => Promise<{
+          status:
+            | 'disconnected'
+            | 'connecting'
+            | 'connected'
+            | 'processing'
+            | 'error';
+          message?: string;
+        }>;
+        getEnhancementDetails: (fieldId: string) => Promise<
+          | {
+              prompt?: string;
+              response?: string;
+              confidence?: number;
+              fieldType?: string;
+            }
+          | undefined
+        >;
+        reconnect: () => Promise<boolean>;
       };
       browser: {
         getCurrentUrl: () => Promise<string | undefined>;
@@ -30,14 +56,14 @@ declare global {
           }>;
           summary: string;
         }>;
-        setLLMEnabled: (enabled: boolean) => Promise<{
-          success: boolean;
-          llmEnabled: boolean;
-        }>;
         getEnhancementConfig: () => Promise<{
-          enableLLM?: boolean;
-          enableCache?: boolean;
+          enableCache: boolean;
+          selectedModel?: string;
         }>;
+        updateEnhancementConfig: (config: {
+          enableCache: boolean;
+          selectedModel?: string;
+        }) => Promise<{ success: boolean; config: unknown }>;
         onNavigationStart: (url: string) => void;
         onNavigationComplete: (url: string, title?: string) => void;
       };
