@@ -268,7 +268,7 @@ export class FormInteractionService extends EventEmitter {
           dispatchReactEvent(element, 'change');
           
         } else {
-          // Handle text-like inputs (text, email, tel, url, password, number, etc.)
+          // Handle text-like inputs (text, email, tel, url, password, number, etc.) and textareas
           
           // Clear field if requested
           if (options.clearFirst && element.value) {
@@ -276,20 +276,20 @@ export class FormInteractionService extends EventEmitter {
             await new Promise(resolve => setTimeout(resolve, 50));
           }
           
-          // For text inputs, simulate typing for realism
-          if (fieldType === 'text' || fieldType === 'email' || fieldType === 'tel' || fieldType === 'url') {
-            // Use native setter for React compatibility
-            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLInputElement.prototype,
-              'value'
-            ).set;
-            nativeInputValueSetter.call(element, '');
+          // For text inputs and textareas, simulate typing for realism
+          if (fieldType === 'text' || fieldType === 'email' || fieldType === 'tel' || fieldType === 'url' || tagName === 'textarea') {
+            // Use native setter for React compatibility - handle both input and textarea elements
+            const nativeValueSetter = tagName === 'textarea'
+              ? Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
+              : Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            
+            nativeValueSetter.call(element, '');
             
             // Type character by character
             for (let i = 0; i < value.length; i++) {
               const char = value[i];
               
-              nativeInputValueSetter.call(element, element.value + char);
+              nativeValueSetter.call(element, element.value + char);
               
               dispatchReactEvent(element, 'input', {
                 data: char,

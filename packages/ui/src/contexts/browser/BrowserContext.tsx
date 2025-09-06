@@ -221,7 +221,24 @@ export function BrowserProvider({
             (function() {
               const field = document.querySelector('${field.selector}');
               if (field) {
-                field.value = '${(field.uiValue || '').replace(/'/g, "\\'")}';
+                const tagName = field.tagName.toLowerCase();
+                const value = '${(field.uiValue || '').replace(/'/g, "\\'")}';
+                
+                // Use appropriate native setter for input or textarea
+                if (tagName === 'textarea') {
+                  const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLTextAreaElement.prototype,
+                    'value'
+                  ).set;
+                  nativeTextAreaValueSetter.call(field, value);
+                } else {
+                  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype,
+                    'value'
+                  ).set;
+                  nativeInputValueSetter.call(field, value);
+                }
+                
                 field.dispatchEvent(new Event('input', { bubbles: true }));
                 field.dispatchEvent(new Event('change', { bubbles: true }));
               }
