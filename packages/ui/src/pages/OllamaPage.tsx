@@ -1,13 +1,5 @@
 import { OllamaChat } from '../molecules/OllamaChat';
-
-// Stream request interface (defined locally to avoid circular dependencies)
-interface StreamRequest {
-  model: string;
-  prompt: string;
-  context: string;
-  userPrompt?: string;
-  contextData?: Record<string, unknown>;
-}
+import type { StreamRequest } from '@packages/shared';
 
 export interface OllamaPageProps {
   onSendPrompt: (model: string, prompt: string) => Promise<string>;

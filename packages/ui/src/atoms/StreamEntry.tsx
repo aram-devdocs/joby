@@ -218,7 +218,13 @@ export const StreamEntry = React.forwardRef<HTMLDivElement, StreamEntryProps>(
               )}
               {event.data.error && (
                 <div className="text-sm text-red-600 dark:text-red-400">
-                  {event.data.error}
+                  {typeof event.data.error === 'string'
+                    ? event.data.error
+                    : typeof event.data.error === 'object' &&
+                        event.data.error !== null &&
+                        'message' in event.data.error
+                      ? (event.data.error as { message: string }).message
+                      : JSON.stringify(event.data.error)}
                 </div>
               )}
             </div>

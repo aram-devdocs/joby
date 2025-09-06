@@ -318,6 +318,15 @@ export class OllamaStreamManager {
 
     stream.status = 'completed';
 
+    // Test logger with debug message
+    Logger.debug('Test logger with debug message');
+
+    // Test logger with info message
+    Logger.info('Test logger with info message');
+
+    // Test logger with error message
+    Logger.error('Test logger with error message');
+
     Logger.info('Stream completed', {
       streamId,
       context: stream.metadata.context,

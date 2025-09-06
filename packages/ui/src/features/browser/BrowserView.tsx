@@ -380,7 +380,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           }}
           partition="persist:joby"
           webpreferences="contextIsolation=yes,nodeIntegration=no"
-          allowpopups={true}
+          {...({ allowpopups: 'true' } as Record<string, string>)}
         />
       </div>
     </div>

@@ -14,14 +14,7 @@ import {
   BrowserProvider,
   BrowserAPI,
 } from '@packages/ui';
-// Stream request interface (defined locally to avoid circular dependencies)
-interface StreamRequest {
-  model: string;
-  prompt: string;
-  context: string;
-  userPrompt?: string;
-  contextData?: Record<string, unknown>;
-}
+import type { StreamRequest } from '@packages/shared';
 
 // Create a wrapper component to handle navigation
 function DashboardWrapper({

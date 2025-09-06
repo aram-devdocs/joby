@@ -123,20 +123,26 @@ function extractForms(): FormData {
   };
 }
 
-interface ElectronAPI {
+// Define webview-specific ElectronAPI interface
+// Note: This is different from the main ElectronAPI in @packages/shared
+// as webviews have limited, specific IPC methods
+interface WebviewElectronAPI {
   onFormDataRequest: (callback: () => FormData) => void;
   sendFormData: (data: FormData) => void;
 }
 
+// Use module augmentation to extend the existing Window interface
 declare global {
   interface Window {
-    electronAPI?: ElectronAPI;
+    // @ts-ignore - Override the type from @packages/shared for webview context
+    electronAPI?: WebviewElectronAPI;
   }
 }
 
 // Set up message handler for IPC
 if (window.electronAPI) {
-  const api = window.electronAPI;
+  // Type assertion to use the webview-specific API
+  const api = window.electronAPI as unknown as WebviewElectronAPI;
 
   // Send form data when requested
   api.onFormDataRequest(() => {

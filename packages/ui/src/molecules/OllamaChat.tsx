@@ -4,30 +4,8 @@ import { Input } from '../atoms/input';
 import { Select } from '../atoms/select';
 import { TextArea } from '../atoms/text-area';
 import { Button } from '../atoms/button';
-
-// Stream request interface (defined locally to avoid circular dependencies)
-interface StreamRequest {
-  model: string;
-  prompt: string;
-  context: string;
-  userPrompt?: string;
-  contextData?: Record<string, unknown>;
-}
-
-// Stream event interfaces (defined locally to avoid circular dependencies)
-interface StreamEventBase {
-  type: string;
-  data: Record<string, unknown>;
-}
-
-function isStreamEvent(event: unknown): event is StreamEventBase {
-  return (
-    typeof event === 'object' &&
-    event !== null &&
-    typeof (event as StreamEventBase).type === 'string' &&
-    typeof (event as StreamEventBase).data === 'object'
-  );
-}
+import type { StreamRequest } from '@packages/shared';
+import { isStreamEvent } from '@packages/shared';
 
 export interface OllamaChatProps {
   onSendPrompt: (model: string, prompt: string) => Promise<string>;
