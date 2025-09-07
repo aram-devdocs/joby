@@ -1,3 +1,4 @@
+/// <reference path="./types/window.d.ts" />
 import React from 'react';
 import {
   HashRouter as Router,
@@ -9,12 +10,20 @@ import {
   DashboardTemplate,
   BrowserPage,
   OllamaPage,
+  SettingsPage,
   BrowserProvider,
   BrowserAPI,
 } from '@packages/ui';
+import type { StreamRequest } from '@packages/shared';
 
 // Create a wrapper component to handle navigation
-function DashboardWrapper({ children }: { children: React.ReactNode }) {
+function DashboardWrapper({
+  children,
+  onStreamEvent,
+}: {
+  children: React.ReactNode;
+  onStreamEvent?: (callback: (event: unknown) => void) => () => void;
+}) {
   const navigate = useNavigate();
   const [activeRoute, setActiveRoute] = React.useState('browser');
 
@@ -32,7 +41,11 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <DashboardTemplate activeRoute={activeRoute} onNavigate={handleNavigate}>
+    <DashboardTemplate
+      activeRoute={activeRoute}
+      onNavigate={handleNavigate}
+      {...(onStreamEvent && { onStreamEvent })}
+    >
       {children}
     </DashboardTemplate>
   );
@@ -89,15 +102,6 @@ function DocumentsPage() {
   );
 }
 
-function SettingsPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <p className="text-gray-600">Configure your preferences</p>
-    </div>
-  );
-}
-
 export const App: React.FC = () => {
   // Create browser API adapter for Electron
   const browserAPI: BrowserAPI = {
@@ -120,7 +124,36 @@ export const App: React.FC = () => {
     throw new Error('Ollama API not available');
   };
 
-  const handleGetModels = async () => {
+  // Streaming handlers
+  const handleStreamPrompt = async (
+    request: StreamRequest,
+  ): Promise<string> => {
+    if (window.electronAPI?.ollama?.streamPrompt) {
+      return window.electronAPI.ollama.streamPrompt(request);
+    }
+    throw new Error('Ollama streaming API not available');
+  };
+
+  const handleCancelStream = async (
+    streamId: string,
+    reason?: string,
+  ): Promise<void> => {
+    if (window.electronAPI?.ollama?.cancelStream) {
+      await window.electronAPI.ollama.cancelStream(streamId, reason);
+    }
+  };
+
+  const handleOnStreamEvent = (callback: (event: unknown) => void) => {
+    if (window.electronAPI?.ollama?.onStreamEvent) {
+      return window.electronAPI.ollama.onStreamEvent(callback);
+    }
+    // Return empty cleanup function if no streaming support
+    return () => {
+      // No cleanup needed when streaming is not supported
+    };
+  };
+
+  const handleGetModelObjects = async () => {
     if (window.electronAPI?.ollama?.getModels) {
       return window.electronAPI.ollama.getModels();
     }
@@ -133,26 +166,107 @@ export const App: React.FC = () => {
     }
   };
 
+  // Settings handlers
+  const handleTestOllamaConnection = async () => {
+    if (window.electronAPI?.ollama?.testConnection) {
+      return window.electronAPI.ollama.testConnection();
+    }
+    return { connected: false };
+  };
+
+  const handleGetEnhancementConfig = async (): Promise<{
+    enableCache: boolean;
+    selectedModel?: string;
+  }> => {
+    if (window.electronAPI?.browser?.getEnhancementConfig) {
+      const config = await window.electronAPI.browser.getEnhancementConfig();
+      // Return only the fields expected by the new SettingsPage interface
+      const result: { enableCache: boolean; selectedModel?: string } = {
+        enableCache: config.enableCache,
+      };
+      if (config.selectedModel !== undefined) {
+        result.selectedModel = config.selectedModel;
+      }
+      return result;
+    }
+    // LLM is always enabled now
+    return { enableCache: true };
+  };
+
+  const handleUpdateEnhancementConfig = async (config: {
+    enableCache: boolean;
+    selectedModel?: string;
+  }): Promise<void> => {
+    if (window.electronAPI?.browser?.updateEnhancementConfig) {
+      // Backend now expects the same interface as frontend (without enableLLM)
+      await window.electronAPI.browser.updateEnhancementConfig(config);
+    }
+  };
+
+  // LLM Status handlers
+  const handleGetLLMStatus = async () => {
+    if (window.electronAPI?.llm?.getStatus) {
+      return window.electronAPI.llm.getStatus();
+    }
+    return { status: 'disconnected' as const };
+  };
+
+  const handleGetEnhancementDetails = async (fieldId: string) => {
+    if (window.electronAPI?.llm?.getEnhancementDetails) {
+      return window.electronAPI.llm.getEnhancementDetails(fieldId);
+    }
+    return undefined;
+  };
+
+  const handleGetOllamaHost = async () => {
+    if (window.electronAPI?.ollama?.getHost) {
+      return window.electronAPI.ollama.getHost();
+    }
+    return 'http://localhost:11434';
+  };
+
   return (
     <Router>
       <BrowserProvider browserAPI={browserAPI}>
-        <DashboardWrapper>
+        <DashboardWrapper onStreamEvent={handleOnStreamEvent}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/browser" element={<BrowserPage />} />
+            <Route
+              path="/browser"
+              element={
+                <BrowserPage
+                  onGetLLMStatus={handleGetLLMStatus}
+                  onGetEnhancementDetails={handleGetEnhancementDetails}
+                />
+              }
+            />
             <Route
               path="/ollama"
               element={
                 <OllamaPage
                   onSendPrompt={handleSendPrompt}
-                  onGetModels={handleGetModels}
+                  onGetModels={handleGetModelObjects}
                   onSetHost={handleSetHost}
+                  onStreamPrompt={handleStreamPrompt}
+                  onCancelStream={handleCancelStream}
+                  onStreamEvent={handleOnStreamEvent}
                 />
               }
             />
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route
+              path="/settings"
+              element={
+                <SettingsPage
+                  onSetOllamaHost={handleSetHost}
+                  onGetOllamaHost={handleGetOllamaHost}
+                  onTestOllamaConnection={handleTestOllamaConnection}
+                  onGetEnhancementConfig={handleGetEnhancementConfig}
+                  onUpdateEnhancementConfig={handleUpdateEnhancementConfig}
+                />
+              }
+            />
           </Routes>
         </DashboardWrapper>
       </BrowserProvider>

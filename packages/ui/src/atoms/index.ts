@@ -9,3 +9,7 @@ export * from './select';
 export * from './text-area';
 export * from './InteractiveFormInput';
 export * from './FieldStatusIndicator';
+export * from './StreamTimestamp';
+export * from './JSONFormatter';
+export * from './FilterChip';
+export * from './StreamEntry';

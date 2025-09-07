@@ -7,7 +7,13 @@
     "noEmit": true,
     "paths": {
       "@packages/ui": ["../../packages/ui/src"],
-      "@packages/ui/*": ["../../packages/ui/src/*"]
+      "@packages/ui/*": ["../../packages/ui/src/*"],
+      "@packages/browser": ["../../packages/browser/src"],
+      "@packages/browser/*": ["../../packages/browser/src/*"],
+      "@packages/llm": ["../../packages/llm/src"],
+      "@packages/llm/*": ["../../packages/llm/src/*"],
+      "@packages/shared": ["../../packages/shared/src"],
+      "@packages/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

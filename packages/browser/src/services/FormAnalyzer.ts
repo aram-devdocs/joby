@@ -1,9 +1,40 @@
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
+import { cssEscape } from '@packages/shared';
 import { FormInfo, FormField, FormSelectOption } from './BrowserService';
+import { FieldEnhancementService } from './field-enhancement';
+import type { FieldContext } from './field-enhancement';
+
+export interface FormAnalyzerConfig {
+  enableCache?: boolean;
+  selectedModel?: string;
+  ollamaHost?: string;
+}
 
 export class FormAnalyzer {
-  analyzeHTML(html: string): FormInfo[] {
+  private enhancementService: FieldEnhancementService;
+
+  constructor(config?: FormAnalyzerConfig) {
+    // Always initialize with LLM enhancement enabled
+    this.enhancementService = FieldEnhancementService.getInstance({
+      enableCache: config?.enableCache ?? true,
+      llmConfig: {
+        autoConnect: true,
+        model: config?.selectedModel ?? 'llama3.2',
+        ...(config?.ollamaHost !== undefined && {
+          ollamaHost: config.ollamaHost,
+        }),
+        temperature: 0.1,
+        maxRetries: 2,
+        timeoutMs: 5000,
+      },
+    });
+  }
+  async analyzeHTML(
+    html: string,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormInfo[]> {
     const $ = cheerio.load(html);
     const forms: FormInfo[] = [];
 
@@ -55,6 +86,16 @@ export class FormAnalyzer {
       forms.push({
         fields: orphanFields,
       });
+    }
+
+    // Apply enhancements to all fields
+    for (const form of forms) {
+      form.fields = await this.enhanceFields(
+        form.fields,
+        $,
+        pageTitle,
+        pageUrl,
+      );
     }
 
     return forms;
@@ -251,6 +292,320 @@ export class FormAnalyzer {
     return field;
   }
 
+  /**
+   * Convert FormField to FieldContext for enhancement
+   */
+  private convertToFieldContext(
+    field: FormField,
+    _$?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): FieldContext {
+    const context: FieldContext = {
+      element: {
+        ...(field.type && { type: field.type }),
+        ...(field.name && { name: field.name }),
+        ...(field.id && { id: field.id }),
+        ...(field.placeholder && { placeholder: field.placeholder }),
+        ...(field.value && { value: field.value }),
+        ...(field.label && { label: field.label }),
+        ...(field.autocomplete && { autocomplete: field.autocomplete }),
+        ...(field.pattern && { pattern: field.pattern }),
+        ...(field.required && { required: field.required }),
+        ...(field.minLength && { minLength: field.minLength }),
+        ...(field.maxLength && { maxLength: field.maxLength }),
+        ...(field.min && { min: field.min.toString() }),
+        ...(field.max && { max: field.max.toString() }),
+      },
+      ...(field.section && {
+        formContext: {
+          sectionName: field.section,
+        },
+      }),
+      ...(pageTitle || pageUrl
+        ? {
+            pageContext: {
+              ...(pageTitle && { pageTitle }),
+              ...(pageUrl && { pageUrl }),
+            },
+          }
+        : {}),
+    };
+
+    // Add aria labels from attributes if available
+    if (field.attributes?.['aria-label']) {
+      context.element.ariaLabel = field.attributes['aria-label'];
+    }
+    if (field.attributes?.['aria-labelledby']) {
+      context.element.ariaLabelledBy = field.attributes['aria-labelledby'];
+    }
+
+    return context;
+  }
+
+  /**
+   * Enhance a single field with intelligent detection
+   */
+  async enhanceField(
+    field: FormField,
+    $?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormField> {
+    const context = this.convertToFieldContext(field, $, pageTitle, pageUrl);
+    const enhancement = await this.enhancementService.enhanceField(context);
+
+    // Merge enhancement data into field
+    if (enhancement.confidence > 0) {
+      field.enhancement = {
+        ...(enhancement.fieldType !== undefined && {
+          fieldType: enhancement.fieldType,
+        }),
+        ...(enhancement.label !== undefined && { label: enhancement.label }),
+        ...(enhancement.validation !== undefined && {
+          validation: enhancement.validation,
+        }),
+        confidence: enhancement.confidence,
+        source: enhancement.source,
+      };
+
+      // Apply enhanced data with priority
+      if (enhancement.label && !field.label) {
+        field.label = enhancement.label;
+      }
+
+      if (enhancement.fieldType) {
+        // Map enhanced field type to inputType if applicable
+        const enhancedType = enhancement.fieldType.toLowerCase();
+        const validInputTypes = [
+          'text',
+          'email',
+          'tel',
+          'url',
+          'number',
+          'date',
+          'password',
+          'select',
+          'radio',
+          'checkbox',
+          'textarea',
+          'range',
+          'color',
+          'search',
+        ] as const;
+        type ValidInputType = (typeof validInputTypes)[number];
+
+        if (validInputTypes.includes(enhancedType as ValidInputType)) {
+          field.inputType = enhancedType as ValidInputType;
+        } else if (enhancedType === 'phone') {
+          field.inputType = 'tel';
+        } else if (enhancedType === 'postal' || enhancedType === 'creditcard') {
+          field.inputType = 'text';
+        }
+      }
+
+      // Apply enhanced validation rules
+      if (enhancement.validation) {
+        if (!field.validationRules) {
+          field.validationRules = [];
+        }
+
+        if (enhancement.validation.required && !field.required) {
+          field.required = true;
+        }
+
+        if (enhancement.validation.pattern && !field.pattern) {
+          field.pattern = enhancement.validation.pattern;
+        }
+
+        if (enhancement.validation.minLength && !field.minLength) {
+          field.minLength = enhancement.validation.minLength;
+        }
+
+        if (enhancement.validation.maxLength && !field.maxLength) {
+          field.maxLength = enhancement.validation.maxLength;
+        }
+
+        if (enhancement.validation.min && !field.min) {
+          field.min = enhancement.validation.min;
+        }
+
+        if (enhancement.validation.max && !field.max) {
+          field.max = enhancement.validation.max;
+        }
+      }
+    }
+
+    return field;
+  }
+
+  /**
+   * Enhance multiple fields in batch
+   */
+  async enhanceFields(
+    fields: FormField[],
+    $?: cheerio.CheerioAPI,
+    pageTitle?: string,
+    pageUrl?: string,
+  ): Promise<FormField[]> {
+    const contexts = fields.map((field) =>
+      this.convertToFieldContext(field, $, pageTitle, pageUrl),
+    );
+
+    const enhancements = await this.enhancementService.enhanceFields(contexts);
+
+    return fields.map((field, index) => {
+      const enhancement = enhancements[index];
+      if (enhancement && enhancement.confidence > 0) {
+        field.enhancement = {
+          ...(enhancement.fieldType !== undefined && {
+            fieldType: enhancement.fieldType,
+          }),
+          ...(enhancement.label !== undefined && { label: enhancement.label }),
+          ...(enhancement.validation !== undefined && {
+            validation: enhancement.validation,
+          }),
+          confidence: enhancement.confidence,
+          source: enhancement.source,
+        };
+
+        // Apply enhanced data as described above
+        if (enhancement.label && !field.label) {
+          field.label = enhancement.label;
+        }
+
+        if (enhancement.fieldType) {
+          const enhancedType = enhancement.fieldType.toLowerCase();
+          const validInputTypes = [
+            'text',
+            'email',
+            'tel',
+            'url',
+            'number',
+            'date',
+            'password',
+            'select',
+            'radio',
+            'checkbox',
+            'textarea',
+            'range',
+            'color',
+            'search',
+          ] as const;
+          type ValidInputType = (typeof validInputTypes)[number];
+
+          if (validInputTypes.includes(enhancedType as ValidInputType)) {
+            field.inputType = enhancedType as ValidInputType;
+          } else if (enhancedType === 'phone') {
+            field.inputType = 'tel';
+          } else if (
+            enhancedType === 'postal' ||
+            enhancedType === 'creditcard'
+          ) {
+            field.inputType = 'text';
+          }
+        }
+
+        if (enhancement.validation) {
+          if (enhancement.validation.required && !field.required) {
+            field.required = true;
+          }
+          if (enhancement.validation.pattern && !field.pattern) {
+            field.pattern = enhancement.validation.pattern;
+          }
+          if (enhancement.validation.minLength && !field.minLength) {
+            field.minLength = enhancement.validation.minLength;
+          }
+          if (enhancement.validation.maxLength && !field.maxLength) {
+            field.maxLength = enhancement.validation.maxLength;
+          }
+        }
+      }
+      return field;
+    });
+  }
+
+  /**
+   * Get LLM connection status
+   */
+  getLLMStatus() {
+    return this.enhancementService.getLLMStatus();
+  }
+
+  /**
+   * Connect to Ollama LLM service with comprehensive error handling
+   */
+  async connectToLLM(): Promise<{
+    success: boolean;
+    status: string;
+    error?: string;
+  }> {
+    try {
+      const result = await this.enhancementService.connectToOllama();
+
+      if (result.success) {
+        return {
+          success: true,
+          status: result.status,
+        };
+      }
+
+      // Connection failed but handled gracefully
+      return {
+        success: false,
+        status: result.status,
+        error: 'Failed to establish connection to LLM service',
+      };
+    } catch (error) {
+      // Unexpected error occurred
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+
+      // Continue functioning without LLM enhancement
+      return {
+        success: false,
+        status: 'error',
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
+   * Disconnect from Ollama LLM service
+   */
+  disconnectFromLLM() {
+    return this.enhancementService.disconnect();
+  }
+
+  /**
+   * Get current enhancement configuration
+   */
+  getEnhancementConfig() {
+    return this.enhancementService.getConfig();
+  }
+
+  /**
+   * Set LLM enabled state (deprecated - LLM is always enabled)
+   */
+  setLLMEnabled(_enabled: boolean) {
+    // LLM is always enabled now, this method is kept for backward compatibility
+    // No-op
+  }
+
+  /**
+   * Set selected model for LLM enhancement
+   */
+  setSelectedModel(model: string) {
+    this.enhancementService.setModel(model);
+  }
+
+  /**
+   * Get enhancement details for a specific field
+   */
+  getFieldEnhancementDetails(fieldId: string) {
+    return this.enhancementService.getFieldEnhancementDetails(fieldId);
+  }
+
   private generateSelector(
     $field: cheerio.Cheerio<AnyNode>,
     tagName: string,
@@ -258,13 +613,13 @@ export class FormAnalyzer {
     // Priority 1: ID selector
     const id = $field.attr('id');
     if (id) {
-      return `#${CSS.escape(id)}`;
+      return `#${cssEscape(id)}`;
     }
 
     // Priority 2: Name attribute selector
     const name = $field.attr('name');
     if (name) {
-      return `${tagName}[name="${CSS.escape(name)}"]`;
+      return `${tagName}[name="${cssEscape(name)}"]`;
     }
 
     // Priority 3: Unique attribute combination
@@ -273,10 +628,10 @@ export class FormAnalyzer {
     let selector = tagName;
 
     if (type) {
-      selector += `[type="${CSS.escape(type)}"]`;
+      selector += `[type="${cssEscape(type)}"]`;
     }
     if (placeholder) {
-      selector += `[placeholder="${CSS.escape(placeholder)}"]`;
+      selector += `[placeholder="${cssEscape(placeholder)}"]`;
     }
 
     // Priority 4: Position-based selector
@@ -323,50 +678,8 @@ export class FormAnalyzer {
     return attributes;
   }
 
-  detectJobApplicationFields(fields: FormField[]): Record<string, FormField[]> {
-    const categories: Record<string, FormField[]> = {
-      personal: [],
-      contact: [],
-      experience: [],
-      education: [],
-      documents: [],
-      other: [],
-    };
-
-    const patterns = {
-      personal: /name|first|last|middle|surname|given/i,
-      contact: /email|phone|address|city|state|zip|postal|country/i,
-      experience:
-        /experience|work|job|company|employer|position|title|role|years/i,
-      education: /education|school|university|degree|major|graduation|gpa/i,
-      documents: /resume|cv|cover|letter|portfolio|file|upload|attach/i,
-    };
-
-    for (const field of fields) {
-      let categorized = false;
-      const searchText = `${field.name || ''} ${field.label || ''} ${field.placeholder || ''}`;
-
-      for (const [category, pattern] of Object.entries(patterns)) {
-        if (pattern.test(searchText)) {
-          const categoryFields = categories[category];
-          if (categoryFields) {
-            categoryFields.push(field);
-            categorized = true;
-            break;
-          }
-        }
-      }
-
-      if (!categorized) {
-        const otherFields = categories.other;
-        if (otherFields) {
-          otherFields.push(field);
-        }
-      }
-    }
-
-    return categories;
-  }
+  // Removed pattern-based field detection - this is now handled by AI enhancement
+  // detectJobApplicationFields method has been removed
 
   private detectFieldSection(
     _$: cheerio.CheerioAPI,
@@ -441,11 +754,18 @@ export class FormAnalyzer {
       }
       summary += `  Fields: ${form.fields.length}\n`;
 
-      const categories = this.detectJobApplicationFields(form.fields);
-      for (const [category, fields] of Object.entries(categories)) {
-        if (fields.length > 0) {
-          summary += `    - ${category}: ${fields.length} field(s)\n`;
-        }
+      // Group fields by inputType for a simpler summary
+      const fieldsByType = form.fields.reduce(
+        (acc, field) => {
+          const type = field.inputType || 'text';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      for (const [type, count] of Object.entries(fieldsByType)) {
+        summary += `    - ${type}: ${count} field(s)\n`;
       }
       summary += '\n';
     });

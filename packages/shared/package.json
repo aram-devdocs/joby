@@ -1,0 +1,24 @@
+{
+  "name": "@packages/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities for Joby application",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.9.3",
+    "eslint": "^9.34.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {}
+}
