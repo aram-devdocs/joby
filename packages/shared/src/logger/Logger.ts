@@ -1,10 +1,10 @@
-import type {
-  LogLevel,
-  LogEntry,
-  LoggerTransport,
-  LoggerConfig,
-} from './types';
 import { LOG_LEVELS } from './types';
+import type {
+  LogEntry,
+  LoggerConfig,
+  LoggerTransport,
+  LogLevel,
+} from './types';
 
 export class Logger {
   private static instance: Logger;
@@ -14,18 +14,16 @@ export class Logger {
 
   private constructor(config?: Partial<LoggerConfig>) {
     this.config = {
-      level: config?.level || 'info',
-      transports: config?.transports || [],
-      context: config?.context || {},
-      source: config?.source || this.detectSource(),
+      level: config?.level ?? 'info',
+      transports: config?.transports ?? [],
+      context: config?.context ?? {},
+      source: config?.source ?? this.detectSource(),
     };
     this.transports = this.config.transports;
   }
 
   static getInstance(config?: Partial<LoggerConfig>): Logger {
-    if (!Logger.instance) {
-      Logger.instance = new Logger(config);
-    }
+    Logger.instance ??= new Logger(config);
     return Logger.instance;
   }
 
@@ -63,7 +61,7 @@ export class Logger {
 
   static error(
     message: string,
-    error?: Error | unknown,
+    error?: Error,
     context?: Record<string, unknown>,
   ): void {
     Logger.getInstance().error(message, error, context);
@@ -83,15 +81,15 @@ export class Logger {
 
   // Instance methods
   updateConfig(config: Partial<LoggerConfig>): void {
-    if (config.level) this.config.level = config.level;
-    if (config.transports) this.transports = config.transports;
-    if (config.context)
+    if (config.level !== undefined) this.config.level = config.level;
+    if (config.transports !== undefined) this.transports = config.transports;
+    if (config.context !== undefined)
       this.config.context = { ...this.config.context, ...config.context };
-    if (config.source) this.config.source = config.source;
+    if (config.source !== undefined) this.config.source = config.source;
   }
 
   addTransport(transport: LoggerTransport): void {
-    if (!this.transports.find((t) => t.name === transport.name)) {
+    if (this.transports.find((t) => t.name === transport.name) === undefined) {
       this.transports.push(transport);
     }
   }
@@ -118,7 +116,7 @@ export class Logger {
 
   error(
     message: string,
-    error?: Error | unknown,
+    error?: Error,
     context?: Record<string, unknown>,
   ): void {
     const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -134,7 +132,7 @@ export class Logger {
   }
 
   withContext(context: Record<string, unknown>): Logger {
-    const childLogger = Object.create(this);
+    const childLogger = Object.create(this) as Logger;
     childLogger.contextStack = [...this.contextStack, context];
     return childLogger;
   }
@@ -148,10 +146,12 @@ export class Logger {
 
   timeEnd(label: string): void {
     const start = this.timers.get(label);
-    if (start) {
+    if (start !== undefined) {
       const duration = Date.now() - start;
       this.timers.delete(label);
-      this.debug(`Timer ended: ${label}`, { duration: `${duration}ms` });
+      this.debug(`Timer ended: ${label}`, {
+        duration: `${String(duration)}ms`,
+      });
     }
   }
 
@@ -175,7 +175,7 @@ export class Logger {
       level,
       message,
       timestamp: Date.now(),
-      source: this.config.source || this.detectSource(),
+      source: this.config.source ?? this.detectSource(),
       ...(Object.keys(mergedContext).length > 0 && { context: mergedContext }),
     };
 
@@ -213,8 +213,8 @@ export class Logger {
   async flush(): Promise<void> {
     await Promise.all(
       this.transports
-        .filter((t) => t.isEnabled && t.flush)
-        .map((t) => (t.flush ? t.flush() : Promise.resolve())),
+        .filter((t) => t.isEnabled && typeof t.flush === 'function')
+        .map((t) => (t.flush !== undefined ? t.flush() : Promise.resolve())),
     );
   }
 }

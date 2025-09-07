@@ -15,8 +15,8 @@ export class LocalStorageTransport implements LoggerTransport {
   private buffer: LogEntry[] = [];
 
   constructor(options?: LocalStorageTransportOptions) {
-    this.key = options?.key || 'joby-logs';
-    this.maxEntries = options?.maxEntries || 1000;
+    this.key = options?.key ?? 'joby-logs';
+    this.maxEntries = options?.maxEntries ?? 1000;
     this.persist = options?.persist ?? true;
 
     if (this.persist) {
@@ -25,7 +25,11 @@ export class LocalStorageTransport implements LoggerTransport {
   }
 
   log(entry: LogEntry): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.localStorage === 'undefined'
+    )
+      return;
 
     this.buffer.push(entry);
 
@@ -40,14 +44,18 @@ export class LocalStorageTransport implements LoggerTransport {
   }
 
   private loadFromStorage(): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.localStorage === 'undefined'
+    )
+      return;
 
     try {
       const stored = window.localStorage.getItem(this.key);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      if (stored !== null) {
+        const parsed = JSON.parse(stored) as unknown;
         if (Array.isArray(parsed)) {
-          this.buffer = parsed;
+          this.buffer = parsed as LogEntry[];
         }
       }
     } catch {
@@ -57,7 +65,11 @@ export class LocalStorageTransport implements LoggerTransport {
   }
 
   private saveToStorage(): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.localStorage === 'undefined'
+    )
+      return;
 
     try {
       window.localStorage.setItem(this.key, JSON.stringify(this.buffer));
@@ -81,12 +93,16 @@ export class LocalStorageTransport implements LoggerTransport {
 
   clear(): void {
     this.buffer = [];
-    if (this.persist && typeof window !== 'undefined' && window.localStorage) {
+    if (
+      this.persist &&
+      typeof window !== 'undefined' &&
+      typeof window.localStorage !== 'undefined'
+    ) {
       window.localStorage.removeItem(this.key);
     }
   }
 
-  async flush(): Promise<void> {
+  flush(): void {
     if (this.persist) {
       this.saveToStorage();
     }

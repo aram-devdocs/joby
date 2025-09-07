@@ -98,6 +98,7 @@ export interface EnhancementConfig {
     autoConnect?: boolean;
     retryDelayMs?: number;
     maxConnectionRetries?: number;
+    ollamaHost?: string;
   };
   confidenceThresholds?: {
     high?: number;

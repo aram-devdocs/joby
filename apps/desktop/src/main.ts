@@ -1,5 +1,15 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import Store from 'electron-store';
+
+type StoreSchema = {
+  enhancement: {
+    enableCache: boolean;
+    selectedModel: string;
+  };
+  ollama: {
+    host: string;
+  };
+};
 import {
   OllamaService,
   OllamaStreamManager,
@@ -59,16 +69,8 @@ app.on('activate', () => {
   }
 });
 
-// Initialize persistent store
-const store = new Store<{
-  enhancement: {
-    enableCache: boolean;
-    selectedModel: string;
-  };
-  ollama: {
-    host: string;
-  };
-}>({
+// Initialize persistent store with wrapper for type safety
+const storeInstance = new Store<StoreSchema>({
   defaults: {
     enhancement: {
       enableCache: true,
@@ -80,32 +82,41 @@ const store = new Store<{
   },
 });
 
+// Type-safe store wrapper
+const store = {
+  get: <K extends keyof StoreSchema>(key: K): StoreSchema[K] => {
+    return (
+      storeInstance as unknown as { get: (key: K) => StoreSchema[K] }
+    ).get(key);
+  },
+  set: <K extends keyof StoreSchema>(key: K, value: StoreSchema[K]): void => {
+    (
+      storeInstance as unknown as {
+        set: (key: K, value: StoreSchema[K]) => void;
+      }
+    ).set(key, value);
+  },
+};
+
 // Initialize services
 const ollamaService = new OllamaService();
 const ollamaStreamManager = new OllamaStreamManager();
 const streamLogger = new StreamLogger();
 const browserService = new BrowserService();
-const formAnalyzer = new FormAnalyzer();
-const formInteractionService = new FormInteractionService();
-
 // Load saved settings
-interface StoreType {
-  get(key: string): unknown;
-  set(key: string, value: unknown): void;
-}
-const savedConfig = (store as unknown as StoreType).get('enhancement') as {
-  selectedModel?: string;
-};
+const savedConfig = store.get('enhancement');
+const savedOllamaHost = store.get('ollama').host;
+
+// Initialize FormAnalyzer with configuration
+const formAnalyzer = new FormAnalyzer({
+  enableCache: savedConfig.enableCache,
+  selectedModel: savedConfig.selectedModel,
+  ollamaHost: savedOllamaHost,
+});
+const formInteractionService = new FormInteractionService();
 
 // LLM is always enabled now
 formAnalyzer.setLLMEnabled(true);
-if (savedConfig.selectedModel) {
-  formAnalyzer.setSelectedModel(savedConfig.selectedModel);
-}
-
-const savedOllamaHost = (
-  (store as unknown as StoreType).get('ollama') as { host: string }
-).host;
 if (savedOllamaHost) {
   ollamaService.updateHost(savedOllamaHost);
   ollamaStreamManager.updateHost(savedOllamaHost);
@@ -173,13 +184,12 @@ app.whenReady().then(() => {
 ipcMain.handle('ollama:setHost', async (_event, host: string) => {
   ollamaService.updateHost(host);
   ollamaStreamManager.updateHost(host);
-  (store as unknown as StoreType).set('ollama', { host });
+  store.set('ollama', { host });
   return { success: true };
 });
 
 ipcMain.handle('ollama:getHost', () => {
-  return ((store as unknown as StoreType).get('ollama') as { host: string })
-    .host;
+  return store.get('ollama').host;
 });
 
 ipcMain.handle('ollama:getModels', async () => {
@@ -296,10 +306,7 @@ ipcMain.handle('llm:reconnect', async () => {
 });
 
 ipcMain.handle('browser:getEnhancementConfig', () => {
-  const config = (store as unknown as StoreType).get('enhancement') as {
-    enableCache: boolean;
-    selectedModel?: string;
-  };
+  const config = store.get('enhancement');
   // Always return enableLLM as true for backward compatibility
   return { ...config, enableLLM: true };
 });
@@ -320,7 +327,7 @@ ipcMain.handle(
     }
 
     // Save to persistent storage (without enableLLM)
-    (store as unknown as StoreType).set('enhancement', {
+    store.set('enhancement', {
       enableCache: config.enableCache,
       selectedModel: config.selectedModel || 'llama3.2',
     });

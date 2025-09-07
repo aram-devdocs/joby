@@ -54,7 +54,7 @@ export interface OllamaModel {
  */
 export interface OllamaConnectionResult {
   connected: boolean;
-  models?: Array<string | OllamaModel>;
+  models?: (string | OllamaModel)[];
 }
 
 /**
@@ -96,9 +96,9 @@ export interface ElectronAPI {
       pageUrl?: string,
       pageTitle?: string,
     ) => Promise<{
-      forms: Array<{
+      forms: {
         fields: FormField[];
-      }>;
+      }[];
       summary: string;
     }>;
     getEnhancementConfig: () => Promise<EnhancementConfig>;

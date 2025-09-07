@@ -1,5 +1,5 @@
-import type { LogEntry, LoggerTransport } from '../types';
 import type { StreamEvent } from '../../types/stream-events';
+import type { LogEntry, LoggerTransport } from '../types';
 
 interface TerminalTransportOptions {
   eventBus?: {
@@ -19,7 +19,7 @@ export class TerminalTransport implements LoggerTransport {
   log(entry: LogEntry): void {
     // Convert LogEntry to StreamEvent format
     const streamEvent: Partial<StreamEvent> = {
-      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `log-${String(Date.now())}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: new Date(entry.timestamp),
       type: this.mapLogLevelToEventType(entry.level),
       data: {
@@ -31,12 +31,12 @@ export class TerminalTransport implements LoggerTransport {
     };
 
     // Send via EventBus if available (backend)
-    if (this.options.eventBus) {
+    if (this.options.eventBus !== undefined) {
       this.options.eventBus.emit(streamEvent);
     }
 
     // Send via IPC if available (frontend)
-    if (this.options.ipcRenderer) {
+    if (this.options.ipcRenderer !== undefined) {
       this.options.ipcRenderer.send('logger:event', streamEvent);
     }
 
@@ -47,7 +47,7 @@ export class TerminalTransport implements LoggerTransport {
         window as unknown as {
           electronAPI?: { logger?: { send?: (event: unknown) => void } };
         }
-      ).electronAPI?.logger?.send
+      ).electronAPI?.logger?.send !== undefined
     ) {
       (
         window as unknown as {

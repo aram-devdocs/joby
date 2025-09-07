@@ -211,7 +211,11 @@ export class OllamaStreamManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      Logger.error('Connection test failed', error, { host: this.host });
+      Logger.error(
+        'Connection test failed',
+        error instanceof Error ? error : undefined,
+        { host: this.host },
+      );
 
       eventBus.emit({
         type: 'debug:output',
@@ -318,15 +322,6 @@ export class OllamaStreamManager {
 
     stream.status = 'completed';
 
-    // Test logger with debug message
-    Logger.debug('Test logger with debug message');
-
-    // Test logger with info message
-    Logger.info('Test logger with info message');
-
-    // Test logger with error message
-    Logger.error('Test logger with error message');
-
     Logger.info('Stream completed', {
       streamId,
       context: stream.metadata.context,
@@ -371,7 +366,7 @@ export class OllamaStreamManager {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
 
-    Logger.error('Stream error', error, {
+    Logger.error('Stream error', error instanceof Error ? error : undefined, {
       streamId,
       context: stream.metadata.context,
     });

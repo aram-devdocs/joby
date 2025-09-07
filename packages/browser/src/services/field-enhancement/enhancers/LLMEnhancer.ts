@@ -19,14 +19,14 @@ export class LLMEnhancer implements FieldEnhancer {
     timeoutMs?: number;
     ollamaHost?: string;
   }) {
-    this.model = config?.model || 'llama2';
+    this.model = config?.model ?? 'llama3.2';
     // Temperature could be used in future for prompt tuning
     // const temperature = config?.temperature || 0.1;
-    this.maxRetries = config?.maxRetries || 2;
-    this.timeoutMs = config?.timeoutMs || 5000;
+    this.maxRetries = config?.maxRetries ?? 2;
+    this.timeoutMs = config?.timeoutMs ?? 5000;
 
     this.ollamaService = new OllamaServiceAdapter({
-      host: config?.ollamaHost || 'http://127.0.0.1:11434',
+      host: config?.ollamaHost ?? 'http://localhost:11434',
     });
     this.streamingEnabled = true; // Enable streaming by default for enhanced debugging
   }

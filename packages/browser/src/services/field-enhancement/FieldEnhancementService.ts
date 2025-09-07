@@ -33,7 +33,7 @@ export class FieldEnhancementService {
         ttlSeconds: 3600,
       },
       llmConfig: {
-        model: 'llama2',
+        model: 'llama3.2',
         temperature: 0.1,
         maxRetries: 2,
         timeoutMs: 5000,

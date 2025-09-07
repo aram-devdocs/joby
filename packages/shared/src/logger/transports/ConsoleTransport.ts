@@ -9,33 +9,39 @@ export class ConsoleTransport implements LoggerTransport {
   log(entry: LogEntry): void {
     if (typeof console === 'undefined') return;
 
-    const timestamp = this.options?.timestamp
-      ? `[${new Date(entry.timestamp).toISOString()}]`
-      : '';
+    const timestamp =
+      this.options?.timestamp === true
+        ? `[${new Date(entry.timestamp).toISOString()}]`
+        : '';
 
     const prefix =
       `${timestamp}[${entry.source}][${entry.level.toUpperCase()}]`.trim();
     const message = `${prefix} ${entry.message}`;
 
     const args: unknown[] = [message];
-    if (entry.context) {
+    if (entry.context !== undefined) {
       args.push(entry.context);
     }
 
     switch (entry.level) {
       case 'trace':
       case 'debug':
+        // eslint-disable-next-line no-console
         console.debug(...args);
         break;
       case 'info':
+        // eslint-disable-next-line no-console
         console.info(...args);
         break;
       case 'warn':
+        // eslint-disable-next-line no-console
         console.warn(...args);
         break;
       case 'error':
+        // eslint-disable-next-line no-console
         console.error(...args);
-        if (entry.stack) {
+        if (entry.stack !== undefined) {
+          // eslint-disable-next-line no-console
           console.error(entry.stack);
         }
         break;

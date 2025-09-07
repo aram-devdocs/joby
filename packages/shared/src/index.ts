@@ -46,3 +46,6 @@ export type {
 
 // Type guard exports
 export { isStreamEvent } from './types';
+
+// Utility exports
+export { cssEscape } from './utils';
