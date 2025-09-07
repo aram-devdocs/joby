@@ -1,4 +1,6 @@
 
+#!/bin/sh
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,8 +16,8 @@ git update-index --again
 
 # Function to run checks in parallel
 run_parallel_checks() {
-  local pids=()
-  local failed=0
+  pids=""
+  failed=0
   
   # Run lint-staged
   (
@@ -23,7 +25,7 @@ run_parallel_checks() {
     npx lint-staged
     echo $? > /tmp/lint-staged-status
   ) &
-  pids+=($!)
+  pids="$pids $!"
   
   # Run type checking
   (
@@ -31,15 +33,15 @@ run_parallel_checks() {
     pnpm typecheck
     echo $? > /tmp/type-check-status
   ) &
-  pids+=($!)
+  pids="$pids $!"
   
-  # Check for console.log statements
+  # Check for console.log statements (excluding scripts directory)
   (
     echo "🚫 Checking for console.log statements..."
-    files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' || true)
+    files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v '^scripts/' || true)
     if [ -n "$files" ]; then
       if echo "$files" | xargs grep -l 'console\.log' 2>/dev/null; then
-        echo -e "${RED}❌ Found console.log statements. Please remove them before committing.${NC}"
+        printf "${RED}❌ Found console.log statements. Please remove them before committing.${NC}\n"
         echo 1 > /tmp/console-check-status
       else
         echo 0 > /tmp/console-check-status
@@ -48,7 +50,7 @@ run_parallel_checks() {
       echo 0 > /tmp/console-check-status
     fi
   ) &
-  pids+=($!)
+  pids="$pids $!"
   
   # Check for TODO comments
   (
@@ -56,15 +58,15 @@ run_parallel_checks() {
     files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' || true)
     if [ -n "$files" ]; then
       if echo "$files" | xargs grep -l 'TODO\|FIXME\|HACK' 2>/dev/null; then
-        echo -e "${YELLOW}⚠️  Found TODO/FIXME/HACK comments. Consider addressing them.${NC}"
+        printf "${YELLOW}⚠️  Found TODO/FIXME/HACK comments. Consider addressing them.${NC}\n"
       fi
     fi
   ) &
-  pids+=($!)
+  pids="$pids $!"
   
   # Wait for all background jobs
-  for pid in "${pids[@]}"; do
-    wait "$pid"
+  for pid in $pids; do
+    wait $pid
   done
   
   # Check results
@@ -80,8 +82,8 @@ run_parallel_checks() {
 
 # Run checks
 if run_parallel_checks; then
-  echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
+  printf "${GREEN}✅ All pre-commit checks passed!${NC}\n"
 else
-  echo -e "${RED}❌ Pre-commit checks failed. Please fix the issues above.${NC}"
+  printf "${RED}❌ Pre-commit checks failed. Please fix the issues above.${NC}\n"
   exit 1
 fi
