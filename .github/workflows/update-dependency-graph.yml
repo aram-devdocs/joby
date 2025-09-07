@@ -1,0 +1,132 @@
+name: Update Dependency Graph
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - "scripts/generate-dependency-graph.js"
+  pull_request:
+    paths:
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - "scripts/generate-dependency-graph.js"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update-graph:
+    runs-on: ubuntu-latest
+    # Only run on main branch pushes or manual triggers
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install mermaid-cli globally
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Generate dependency graph
+        run: pnpm deps:graph
+
+      - name: Check if graph changed
+        id: check-changes
+        run: |
+          if git diff --quiet dependency-graph.png; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dependency-graph.png
+          git commit -m "chore: update dependency graph [skip ci]"
+          git push
+
+  check-graph:
+    runs-on: ubuntu-latest
+    # Only run on pull requests
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install mermaid-cli globally
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Generate dependency graph
+        run: pnpm deps:graph
+
+      - name: Check if graph is up to date
+        run: |
+          if git diff --quiet dependency-graph.png; then
+            echo "✅ Dependency graph is up to date"
+          else
+            echo "❌ Dependency graph is out of date. Please run 'pnpm deps:graph' locally and commit the changes."
+            exit 1
+          fi

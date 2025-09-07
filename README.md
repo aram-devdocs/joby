@@ -70,6 +70,17 @@ This monorepo contains the following apps and packages:
 - **`@packages/typescript-config`** - Shared TypeScript configurations
 - **`@packages/prettier-config`** - Shared Prettier configurations
 
+## Package Dependencies
+
+This diagram shows the dependency relationships between all packages and apps in
+the monorepo. It is automatically generated and kept up-to-date through:
+
+- Pre-commit hooks when package.json files change
+- Post-checkout hooks when switching branches
+- GitHub Actions on pushes to main/develop branches
+
+![Dependency Graph](dependency-graph.png)
+
 ## Getting Started
 
 ### Prerequisites
@@ -133,6 +144,9 @@ pnpm build
 # Package desktop app
 pnpm -F desktop package
 pnpm -F desktop make
+
+# Generate dependency graph
+pnpm deps:graph
 ```
 
 ## Development Workflow
