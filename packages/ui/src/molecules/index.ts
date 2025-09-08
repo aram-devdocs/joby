@@ -1,6 +1,6 @@
 export * from './HelloWorld';
 export * from './OllamaChat';
-export * from './FormFieldEditor';
+export * from './FieldCard';
 export * from './FormFieldList';
 export * from './TabSystem';
 export * from './StreamViewer';
