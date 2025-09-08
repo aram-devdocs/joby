@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import type { FormField, InteractiveFormField } from '../../types/form';
+import { Logger } from '@packages/shared';
 
 // Define types locally for now since they're not exported from browser package
 type LLMConnectionStatus = {
@@ -20,6 +21,13 @@ type EnhancementDetails = {
   response?: string;
   confidence?: number;
   fieldType?: string;
+};
+
+type Document = {
+  id: string;
+  name: string;
+  content: string;
+  createdAt: Date;
 };
 
 export interface FormData {
@@ -57,6 +65,13 @@ interface BrowserContextValue {
   getEnhancementDetails: (fieldId: string) => EnhancementDetails | undefined;
   // Field retry functionality
   retryFieldEnhancement: (fieldId: string) => Promise<void>;
+  // Document management
+  documents: Document[];
+  addDocument: (name: string, content: string) => void;
+  removeDocument: (id: string) => void;
+  getDocument: (id: string) => Document | undefined;
+  // AI field generation
+  generateFieldValue: (fieldId: string, documentId?: string) => Promise<string>;
 }
 
 const BrowserContext = createContext<BrowserContextValue | undefined>(
@@ -84,6 +99,7 @@ export function BrowserProvider({
   const [enhancementDetails, setEnhancementDetailsState] = useState<
     Map<string, EnhancementDetails>
   >(new Map());
+  const [documents, setDocuments] = useState<Document[]>([]);
 
   const clearForms = useCallback(() => {
     setDetectedForms([]);
@@ -423,6 +439,218 @@ export function BrowserProvider({
     }
   }, [syncField]);
 
+  // Document management functions
+  const addDocument = useCallback(
+    (name: string, content: string) => {
+      const newDocument: Document = {
+        id: crypto.randomUUID(),
+        name,
+        content,
+        createdAt: new Date(),
+      };
+      setDocuments((prev) => [...prev, newDocument]);
+
+      // Save to localStorage for persistence
+      const updatedDocuments = [...documents, newDocument];
+      localStorage.setItem('joby-documents', JSON.stringify(updatedDocuments));
+    },
+    [documents],
+  );
+
+  const removeDocument = useCallback((id: string) => {
+    setDocuments((prev) => {
+      const filtered = prev.filter((doc) => doc.id !== id);
+      localStorage.setItem('joby-documents', JSON.stringify(filtered));
+      return filtered;
+    });
+  }, []);
+
+  const getDocument = useCallback(
+    (id: string) => {
+      return documents.find((doc) => doc.id === id);
+    },
+    [documents],
+  );
+
+  const generateFieldValue = useCallback(
+    async (fieldId: string, documentId?: string): Promise<string> => {
+      Logger.info('[AI Generate] Starting generation for field:', { fieldId });
+
+      const field = interactiveFields.get(fieldId);
+      if (!field) {
+        Logger.error(
+          '[AI Generate] Field not found',
+          new Error(`Field ${fieldId} not found`),
+        );
+        throw new Error('Field not found');
+      }
+
+      Logger.debug('[AI Generate] Field details:', {
+        label: field.label,
+        name: field.name,
+        type: field.inputType,
+        placeholder: field.placeholder,
+      });
+
+      // Use first document if none specified
+      const targetDocument = documentId
+        ? getDocument(documentId)
+        : documents[0];
+
+      if (!targetDocument) {
+        Logger.error('[AI Generate] No document available');
+        throw new Error('No document available for generation');
+      }
+
+      Logger.info('[AI Generate] Using document:', {
+        id: targetDocument.id,
+        name: targetDocument.name,
+        contentLength: targetDocument.content.length,
+      });
+
+      // Create prompt for LLM
+      const fieldLabel =
+        field.label || field.name || field.placeholder || 'field';
+      const fieldType = field.inputType || 'text';
+
+      const prompt = `You are a form field extraction assistant. Extract the appropriate value from the document for the specified form field.
+
+IMPORTANT: Return ONLY the extracted value with no explanation, no reasoning, no XML tags, and no additional text.
+
+Document Content:
+${targetDocument.content}
+
+Field to Fill:
+- Label: ${fieldLabel}
+- Type: ${fieldType}
+${field.placeholder ? `- Placeholder: ${field.placeholder}` : ''}
+${field.required ? '- Required: Yes' : ''}
+
+Examples:
+- For "First Name" field: Return just "John" not "The first name is John"
+- For "Email" field: Return just "john@example.com" not "Based on the resume, the email is john@example.com"
+- For "Phone" field: Return just "555-1234" not any explanation
+
+Return ONLY the extracted value:`;
+
+      Logger.debug('[AI Generate] Prompt created', { length: prompt.length });
+
+      try {
+        if (window.electronAPI?.ollama?.sendPrompt) {
+          Logger.debug('[AI Generate] Checking available models...');
+
+          // Use available model - get first available one
+          const models = await window.electronAPI.ollama.getModels();
+          Logger.debug('[AI Generate] Available models:', { models });
+
+          const model = models?.[0]?.name || 'llama3.2';
+          Logger.info('[AI Generate] Using model:', { model });
+
+          Logger.debug('[AI Generate] Sending prompt to Ollama...');
+          const startTime = Date.now();
+
+          const response = await window.electronAPI.ollama.sendPrompt(
+            model,
+            prompt,
+          );
+
+          const elapsed = Date.now() - startTime;
+          Logger.info('[AI Generate] Response received', {
+            elapsedMs: elapsed,
+            response,
+          });
+
+          let result =
+            typeof response === 'string'
+              ? response.trim()
+              : (response as { response?: string })?.response?.trim() || '';
+
+          // Clean up the response - remove thinking tags and extract final answer
+          // Remove <think> tags and their content
+          result = result.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+          // If there are still tags or explanations, try to extract just the final value
+          // Look for patterns like "the answer is X" or just take the last line
+          if (
+            result.includes('</') ||
+            result.includes('<') ||
+            result.length > 100
+          ) {
+            // Try to find the actual value after common phrases
+            const patterns = [
+              /(?:answer is|result is|value is|should be|would be|is)\s*[:\s]*([^\n.]+)/i,
+              /(?:^|\n)([^\n<]+)$/, // Last line without tags
+            ];
+
+            for (const pattern of patterns) {
+              const match = result.match(pattern);
+              if (match && match[1]) {
+                result = match[1].trim();
+                break;
+              }
+            }
+
+            // Final cleanup - remove any remaining tags
+            result = result.replace(/<[^>]*>/g, '').trim();
+          }
+
+          // For names, capitalize properly
+          if (fieldLabel.toLowerCase().includes('name') && result) {
+            result = result
+              .split(' ')
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+              )
+              .join(' ');
+          }
+
+          Logger.info('[AI Generate] Final cleaned result:', { result });
+
+          return result;
+        }
+        Logger.error(
+          '[AI Generate] Ollama API not available on window.electronAPI',
+        );
+        throw new Error('LLM not available');
+      } catch (error) {
+        Logger.error(
+          '[AI Generate] Error during generation',
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        throw new Error(
+          `Failed to generate field value: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    },
+    [interactiveFields, documents, getDocument],
+  );
+
+  // Load documents from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('joby-documents');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Convert date strings back to Date objects
+        const documentsWithDates = parsed.map(
+          (doc: {
+            id: string;
+            name: string;
+            content: string;
+            createdAt: string;
+          }) => ({
+            ...doc,
+            createdAt: new Date(doc.createdAt),
+          }),
+        );
+        setDocuments(documentsWithDates);
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }, []);
+
   const value: BrowserContextValue = {
     detectedForms,
     setDetectedForms,
@@ -441,6 +669,11 @@ export function BrowserProvider({
     setEnhancementDetails,
     getEnhancementDetails,
     retryFieldEnhancement,
+    documents,
+    addDocument,
+    removeDocument,
+    getDocument,
+    generateFieldValue,
   };
 
   return (

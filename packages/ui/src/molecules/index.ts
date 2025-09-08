@@ -6,3 +6,4 @@ export * from './TabSystem';
 export * from './StreamViewer';
 export * from './FilterControls';
 export * from './StreamHeader';
+export * from './DocumentInput';

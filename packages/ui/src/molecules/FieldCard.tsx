@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from '../atoms/badge';
-import { AlertCircle, Sparkles } from 'lucide-react';
+import { Button } from '../atoms/button';
+import { AlertCircle, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import type { InteractiveFormField } from '../types/form';
 import { FormFieldInput } from './FormFieldInput';
 import { validateField } from '../utils/formValidation';
+import { useBrowserContext } from '../contexts/browser/BrowserContext';
 
 interface QuickEditFieldProps {
   field: InteractiveFormField;
@@ -98,6 +100,8 @@ export const FieldCard: React.FC<FieldCardProps> = ({
   enhancement,
   className = '',
 }) => {
+  const { documents, generateFieldValue } = useBrowserContext();
+  const [isGenerating, setIsGenerating] = useState(false);
   const displayLabel =
     field.label || field.placeholder || field.name || 'Field';
   const hasValue = field.uiValue || field.browserValue || field.value;
@@ -131,6 +135,23 @@ export const FieldCard: React.FC<FieldCardProps> = ({
 
   const fieldType = getFieldTypeDisplay();
   const validation = validateField(field, field.uiValue || '');
+
+  const handleAIGenerate = async () => {
+    if (!documents.length || isGenerating) return;
+
+    setIsGenerating(true);
+    try {
+      const fieldId = field.id || field.name || '';
+      const generatedValue = await generateFieldValue(fieldId);
+      if (generatedValue) {
+        onSave(generatedValue);
+      }
+    } catch {
+      // Silent error handling - errors will be visible through loading states
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div
@@ -193,6 +214,25 @@ export const FieldCard: React.FC<FieldCardProps> = ({
               <span className="text-xs text-gray-500 truncate">
                 {field.name}
               </span>
+            )}
+            {documents.length > 0 && !isActive && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAIGenerate();
+                }}
+                size="sm"
+                variant="ghost"
+                disabled={isGenerating}
+                className="ml-2 h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                ) : (
+                  <Wand2 className="w-3 h-3 mr-1" />
+                )}
+                {isGenerating ? 'Generating...' : 'AI Generate'}
+              </Button>
             )}
           </div>
         </div>
