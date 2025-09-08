@@ -24,6 +24,8 @@ export class FieldEnhancementService {
   private connectionRetryTimer?: NodeJS.Timeout;
   private retryCount = 0;
   private maxRetries = 10;
+  // Track pending enhancement requests to prevent duplicates
+  private pendingRequests: Map<string, Promise<FieldEnhancement>> = new Map();
 
   constructor(config?: EnhancementConfig) {
     this.config = {
@@ -177,8 +179,16 @@ export class FieldEnhancementService {
   }
 
   async enhanceField(context: FieldContext): Promise<FieldEnhancement> {
-    const cacheKey = SimpleMemoryCache.createCacheKey(context.element);
+    // Create a more unique cache key including page context
+    const cacheKey = this.createEnhancedCacheKey(context);
     const startTime = Date.now();
+
+    // Check if there's already a pending request for this field
+    const pendingRequest = this.pendingRequests.get(cacheKey);
+    if (pendingRequest) {
+      // Return the existing promise to avoid duplicate requests
+      return pendingRequest;
+    }
 
     if (this.config.enableCache) {
       const cached = this.cache.get(cacheKey);
@@ -187,6 +197,37 @@ export class FieldEnhancementService {
       }
     }
 
+    // Create the promise but don't start it yet
+    // Store it immediately to prevent race conditions
+    const enhancementPromise = new Promise<FieldEnhancement>(
+      (resolve, reject) => {
+        // Store the promise IMMEDIATELY before any async operations
+        const actualPromise = this.performEnhancement(
+          context,
+          cacheKey,
+          startTime,
+        );
+
+        actualPromise
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            this.pendingRequests.delete(cacheKey);
+          });
+      },
+    );
+
+    // Store the pending request SYNCHRONOUSLY before returning
+    this.pendingRequests.set(cacheKey, enhancementPromise);
+
+    return enhancementPromise;
+  }
+
+  private async performEnhancement(
+    context: FieldContext,
+    cacheKey: string,
+    startTime: number,
+  ): Promise<FieldEnhancement> {
     const mergedEnhancement: FieldEnhancement = {
       confidence: 0,
       source: 'hybrid',
@@ -316,19 +357,63 @@ export class FieldEnhancementService {
     return parts.join('\n');
   }
 
-  async enhanceFields(contexts: FieldContext[]): Promise<FieldEnhancement[]> {
-    const batchSize = 10;
-    const results: FieldEnhancement[] = [];
+  /**
+   * Create an enhanced cache key that includes page context for better uniqueness
+   */
+  private createEnhancedCacheKey(context: FieldContext): string {
+    const parts = [
+      context.element.type || '',
+      context.element.name || '',
+      context.element.id || '',
+      context.element.label || '',
+      context.element.placeholder || '',
+      // Include page URL for page-specific caching
+      context.pageContext?.pageUrl || '',
+      // Include form context if available
+      context.formContext?.formName || context.formContext?.sectionName || '',
+    ];
 
-    for (let i = 0; i < contexts.length; i += batchSize) {
-      const batch = contexts.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map((context) => this.enhanceField(context)),
-      );
-      results.push(...batchResults);
+    // Create a stable key from all parts
+    return parts
+      .join('_')
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '');
+  }
+
+  async enhanceFields(contexts: FieldContext[]): Promise<FieldEnhancement[]> {
+    // Check cache and pending requests first
+    const results: (FieldEnhancement | Promise<FieldEnhancement>)[] = [];
+    const newFieldIndices: number[] = [];
+
+    for (let i = 0; i < contexts.length; i++) {
+      const context = contexts[i];
+      if (!context) continue;
+      const cacheKey = this.createEnhancedCacheKey(context);
+
+      // Check cache first
+      if (this.config.enableCache) {
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+          results[i] = { ...cached, source: 'cache' };
+          continue;
+        }
+      }
+
+      // Check for pending requests
+      const pendingRequest = this.pendingRequests.get(cacheKey);
+      if (pendingRequest) {
+        results[i] = pendingRequest;
+        continue;
+      }
+
+      // Mark this field as needing processing
+      newFieldIndices.push(i);
+      results[i] = this.enhanceField(context);
     }
 
-    return results;
+    // Wait for all promises to resolve
+    const resolvedResults = await Promise.all(results);
+    return resolvedResults;
   }
 
   getConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' | 'none' {

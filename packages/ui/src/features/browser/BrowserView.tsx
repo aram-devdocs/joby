@@ -42,6 +42,8 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   const [pageTitle, setPageTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [jobSite, setJobSite] = useState<string | null>(null);
+  // Track analyzed page content hash to prevent re-analysis
+  const analyzedContentRef = useRef<string>('');
 
   // Create a stable executeScript function
   const executeScript = useCallback(async (script: string) => {
@@ -75,6 +77,17 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       setIsLoading(false);
     };
 
+    // Simple hash function for content comparison
+    const hashContent = (content: string): string => {
+      let hash = 0;
+      for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash.toString(36);
+    };
+
     const handleDOMReady = async () => {
       setIsLoading(false);
 
@@ -87,6 +100,14 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           await webview.executeJavaScript<string>('document.title');
         const url = webview.getURL();
 
+        // Create a content hash to check if we've already analyzed this exact content
+        const contentHash = hashContent(html + url);
+
+        // Skip analysis if we've already analyzed this exact content
+        if (contentHash === analyzedContentRef.current) {
+          return;
+        }
+
         // Use IPC to analyze HTML with enhancement service
         if (window.electronAPI?.browser?.analyzeHTML) {
           const { forms } = await window.electronAPI.browser.analyzeHTML(
@@ -94,6 +115,9 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
             url,
             pageTitle,
           );
+
+          // Store the hash after successful analysis
+          analyzedContentRef.current = contentHash;
 
           if (forms.length > 0 && onFormDetected) {
             // Pass through all FormField data including enhancement information
@@ -216,6 +240,9 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       const url = event.url || webview.getURL();
       setCurrentUrl(url);
       setInputUrl(url);
+
+      // Reset the analyzed content hash when navigating to a new page
+      analyzedContentRef.current = '';
 
       // Detect job site
       if (browserAPI?.detectJobSite) {
