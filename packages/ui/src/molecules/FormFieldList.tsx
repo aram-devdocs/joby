@@ -1,5 +1,5 @@
-import React from 'react';
-import { FormFieldEditor } from './FormFieldEditor';
+import React, { useState } from 'react';
+import { FieldCard } from './FieldCard';
 import type { InteractiveFormField } from '../types/form';
 
 export interface FormFieldListProps {
@@ -19,6 +19,7 @@ export const FormFieldList: React.FC<FormFieldListProps> = ({
   onSyncAll,
   className = '',
 }) => {
+  const [activeFieldId, setActiveFieldId] = useState<string | null>(null);
   const hasUnsyncedChanges = fields.some(
     (field) => field.isEditing && field.uiValue !== field.browserValue,
   );
@@ -75,14 +76,69 @@ export const FormFieldList: React.FC<FormFieldListProps> = ({
 
       <div className="space-y-2">
         {fields.map((field, index) => {
-          const key = field.id || field.name || `field-${index}`;
+          const fieldId = field.id || field.name || `field-${index}`;
           return (
-            <FormFieldEditor
-              key={key}
+            <FieldCard
+              key={fieldId}
               field={field}
-              onValueChange={onValueChange}
-              onEditToggle={onEditToggle}
-              onSync={onSync}
+              onEdit={() => {
+                setActiveFieldId(fieldId);
+                onEditToggle(fieldId);
+              }}
+              onSave={(value) => {
+                onValueChange(fieldId, value);
+                setActiveFieldId(null);
+                onSync(fieldId);
+              }}
+              onTabNext={(value) => {
+                onValueChange(fieldId, value);
+                onSync(fieldId);
+                const currentIndex = fields.findIndex(
+                  (f) =>
+                    (f.id || f.name || `field-${fields.indexOf(f)}`) ===
+                    fieldId,
+                );
+                if (currentIndex < fields.length - 1) {
+                  const nextField = fields[currentIndex + 1];
+                  if (nextField) {
+                    const nextFieldId =
+                      nextField.id ||
+                      nextField.name ||
+                      `field-${currentIndex + 1}`;
+                    setActiveFieldId(nextFieldId);
+                    onEditToggle(nextFieldId);
+                  }
+                } else {
+                  setActiveFieldId(null);
+                }
+              }}
+              onTabPrevious={(value) => {
+                onValueChange(fieldId, value);
+                onSync(fieldId);
+                const currentIndex = fields.findIndex(
+                  (f) =>
+                    (f.id || f.name || `field-${fields.indexOf(f)}`) ===
+                    fieldId,
+                );
+                if (currentIndex > 0) {
+                  const prevField = fields[currentIndex - 1];
+                  if (prevField) {
+                    const prevFieldId =
+                      prevField.id ||
+                      prevField.name ||
+                      `field-${currentIndex - 1}`;
+                    setActiveFieldId(prevFieldId);
+                    onEditToggle(prevFieldId);
+                  }
+                } else {
+                  setActiveFieldId(null);
+                }
+              }}
+              onCancel={() => {
+                setActiveFieldId(null);
+                onEditToggle(fieldId);
+              }}
+              isActive={activeFieldId === fieldId}
             />
           );
         })}

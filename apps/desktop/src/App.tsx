@@ -13,6 +13,7 @@ import {
   SettingsPage,
   BrowserProvider,
   BrowserAPI,
+  DocumentInput,
 } from '@packages/ui';
 import type { StreamRequest } from '@packages/shared';
 
@@ -97,7 +98,10 @@ function DocumentsPage() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Documents</h1>
-      <p className="text-gray-600">Manage your resumes and cover letters</p>
+      <p className="text-gray-600 mb-6">
+        Manage your resumes and cover letters
+      </p>
+      <DocumentInput className="max-w-4xl" />
     </div>
   );
 }
